@@ -30,41 +30,63 @@
             <h2>Configurações</h2>
             
             <div class="setting-item">
+                <label>Tipo de Senha:</label>
+                <div>
+                    <input type="radio" id="mode-char" name="gen-mode" value="char" checked>
+                    <label for="mode-char">Caractere</label>
+                    <input type="radio" id="mode-passphrase" name="gen-mode" value="passphrase">
+                    <label for="mode-passphrase">Passphrase</label>
+                </div>
+            </div>
+            
+            <hr> <div class="setting-item" id="length-setting">
                 <label for="length">Comprimento da Senha:</label>
                 <input type="number" id="length" min="8" max="30" value="12">
             </div>
 
-            <div class="setting-item">
-                <input type="checkbox" id="include-uppercase" checked>
-                <label for="include-uppercase">Incluir Maiúsculas (A-Z)</label>
+            <div id="passphrase-settings" style="display: none;">
+                <div class="setting-item">
+                    <label for="num-words">Número de Palavras:</label>
+                    <input type="number" id="num-words" min="3" max="6" value="4">
+                </div>
+                <div class="setting-item">
+                    <label for="separator">Separador:</label>
+                    <input type="text" id="separator" maxlength="1" value="-">
+                </div>
             </div>
 
-            <div class="setting-item">
-                <input type="checkbox" id="include-lowercase" checked>
-                <label for="include-lowercase">Incluir Minúsculas (a-z)</label>
-            </div>
+            <div id="char-settings">
+                <div class="setting-item">
+                    <input type="checkbox" id="include-uppercase" checked>
+                    <label for="include-uppercase">Incluir Maiúsculas (A-Z)</label>
+                </div>
 
-            <div class="setting-item">
-                <input type="checkbox" id="include-numbers" checked>
-                <label for="include-numbers">Incluir Números (0-9)</label>
-            </div>
+                <div class="setting-item">
+                    <input type="checkbox" id="include-lowercase" checked>
+                    <label for="include-lowercase">Incluir Minúsculas (a-z)</label>
+                </div>
 
-            <div class="setting-item">
-                <input type="checkbox" id="include-symbols">
-                <label for="include-symbols">Incluir Símbolos (!@#$...)</label>
-            </div>
+                <div class="setting-item">
+                    <input type="checkbox" id="include-numbers" checked>
+                    <label for="include-numbers">Incluir Números (0-9)</label>
+                </div>
 
-            <div class="setting-item">
-                <input type="checkbox" id="include-accented-chars">
-                <label for="include-accented-chars">Incluir Caracteres Acentuados (áàãéè...)</label>
-            </div>
-            
-            <div class="setting-item">
-                <input type="checkbox" id="exclude-ambiguous">
-                <label for="exclude-ambiguous" title="Remove caracteres como i, l, 1, L, o, 0, O">Excluir Ambíguos (i, l, 1, 0, o)</label>
+                <div class="setting-item">
+                    <input type="checkbox" id="include-symbols">
+                    <label for="include-symbols">Incluir Símbolos (!@#$...)</label>
+                </div>
+
+                <div class="setting-item">
+                    <input type="checkbox" id="include-accented-chars">
+                    <label for="include-accented-chars">Incluir Caracteres Acentuados (áàãéè...)</label>
+                </div>
+                
+                <div class="setting-item">
+                    <input type="checkbox" id="exclude-ambiguous">
+                    <label for="exclude-ambiguous" title="Remove caracteres como i, l, 1, L, o, 0, O">Excluir Ambíguos (i, l, 1, 0, o)</label>
+                </div>
             </div>
         </div>
-
         <button id="generate-button">Gerar Senha</button>
     </div>
 

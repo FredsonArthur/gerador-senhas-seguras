@@ -119,7 +119,7 @@ h1 {
     transition: background-color 0.3s;
 }
 
-#length {
+#length, #num-words, #separator {
     width: 50px; 
     text-align: center;
     padding: 5px;
@@ -127,6 +127,14 @@ h1 {
     background-color: var(--input-bg);
     color: var(--text-color);
     border-radius: 3px;
+}
+
+/* NOVO: Estilo para o separador de modo */
+.settings hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--input-border);
+    margin: 15px 0;
 }
 
 .setting-item {
@@ -145,7 +153,20 @@ h1 {
     margin-right: 10px;
     cursor: pointer;
     transform: scale(1.2); 
-    accent-color: var(--primary-color); /* Cor do checkbox quando marcado */
+    accent-color: var(--primary-color); 
+}
+
+/* NOVO: Estilos para Rádio Buttons */
+.setting-item input[type="radio"] {
+    margin-right: 5px;
+    transform: scale(1.1); 
+    cursor: pointer;
+    accent-color: #007bff; 
+}
+/* NOVO: Ajuste específico para o input de separador */
+.setting-item input[type="text"]#separator {
+    width: 30px; 
+    margin-left: 10px;
 }
 
 
@@ -185,7 +206,7 @@ h1 {
 /* Cores da barra de força (mantidas fixas para consistência) */
 .strength-weak { background-color: #dc3545; }
 .strength-medium { background-color: #ffc107; }
-.strength-strong { background-color: var(--primary-color); } /* Usa a cor primária */
+.strength-strong { background-color: var(--primary-color); } 
 .strength-very-strong { background-color: #17a2b8; }
 
 .strength-text {
