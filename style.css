@@ -1,0 +1,144 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 450px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.output-area {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+#password-display {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1.1em;
+    border: 1px solid #ccc;
+    border-radius: 5px 0 0 5px;
+    background-color: #eee;
+    /* Adicionado para garantir que o texto não quebre de forma estranha */
+    word-break: break-all; 
+}
+
+#copy-button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#copy-button:hover {
+    background-color: #0056b3;
+}
+
+.settings {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Garante que o input de comprimento seja estreito */
+#length {
+    width: 50px; 
+    text-align: center;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* Estilo para melhoria visual dos checkboxes */
+.setting-item label {
+    flex-grow: 1; /* Permite que o label use o espaço restante */
+    cursor: pointer;
+}
+.setting-item input[type="checkbox"] {
+    margin-right: 10px;
+    cursor: pointer;
+    /* Ajuste de tamanho se desejar */
+    transform: scale(1.2); 
+}
+
+
+#generate-button {
+    width: 100%;
+    padding: 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#generate-button:hover {
+    background-color: #1e7e34;
+}
+
+/* --- ESTILOS PARA O INDICADOR DE FORÇA (PRÓXIMA ETAPA) --- */
+
+.strength-indicator {
+    height: 10px;
+    background-color: #ddd;
+    border-radius: 5px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.strength-bar {
+    height: 100%;
+    width: 0; /* Começa em zero e é atualizado via JS */
+    transition: width 0.3s ease-in-out, background-color 0.3s;
+}
+
+/* Cores da barra de força */
+.strength-weak {
+    background-color: #dc3545; /* Vermelho - Fraca */
+}
+.strength-medium {
+    background-color: #ffc107; /* Amarelo - Média */
+}
+.strength-strong {
+    background-color: #28a745; /* Verde - Forte */
+}
+.strength-very-strong {
+    background-color: #17a2b8; /* Azul/Ciano - Muito Forte */
+}
+
+.strength-text {
+    text-align: right;
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-top: 5px;
+    color: #333;
+}
