@@ -14,6 +14,7 @@ const numberChars = "0123456789";
 const symbolChars = "!@#$%^&*()_+[]{}|;:,.<>?/~`"; 
 const accentedChars = "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ";
 const ambiguousChars = "il1Lo0O"; 
+const HISTORY_LIMIT = 5; // Limite de senhas no histórico
 
 
 // --- 2. REFERÊNCIAS AO DOM (ATUALIZADAS) ---
@@ -37,9 +38,14 @@ const modeChar = document.getElementById('mode-char');
 const modePassphrase = document.getElementById('mode-passphrase');
 const passphraseSettings = document.getElementById('passphrase-settings');
 const charSettings = document.getElementById('char-settings');
-const lengthSetting = document.getElementById('length-setting'); // Para mudar o label do comprimento
+const lengthSetting = document.getElementById('length-setting'); 
 const numWordsInput = document.getElementById('num-words');
 const separatorInput = document.getElementById('separator');
+
+// NOVAS REFERÊNCIAS DO HISTÓRICO
+const passwordHistoryList = document.getElementById('password-history-list');
+const clearHistoryButton = document.getElementById('clear-history-button');
+const historyStatus = document.getElementById('history-status');
 
 
 // --- 3. LÓGICA DE TEMA (DARK MODE) (Mantida) ---
@@ -69,40 +75,26 @@ const separatorInput = document.getElementById('separator');
 })();
 
 
-// --- 4. FUNÇÕES DE ENTROPIA E FORÇA (MODIFICADAS) ---
+// --- 4. FUNÇÕES DE ENTROPIA E FORÇA (Mantidas) ---
 
-/**
- * Calcula a entropia da senha com base no modo de geração.
- * @param {string} password A senha gerada.
- * @param {string} mode 'char' ou 'passphrase'.
- * @param {number} range O tamanho do conjunto de caracteres (para 'char') ou tamanho do dicionário (para 'passphrase').
- */
 function calculateStrength(password, mode, range) {
     if (password.length === 0) return 0;
 
     if (mode === 'char') {
-        // Entropia (bits) = L * log2(R)
         return password.length * Math.log2(range);
     } else if (mode === 'passphrase') {
-        // Entropia (bits) = L_words * log2(W)
-        // Onde W é o tamanho do dicionário (2048) e L_words é o número de palavras.
         const numWords = password.split(separatorInput.value).length;
-        // O separador não adiciona entropia significativa, usamos o tamanho do dicionário como base.
         return numWords * Math.log2(range); 
     }
     return 0;
 }
 
-/**
- * Atualiza o indicador visual de força (barra e texto) para AMBOS os modos.
- */
 function updateStrengthIndicator(password, mode, range) {
     const entropy = calculateStrength(password, mode, range);
     let strength = "";
     let width = 0;
     let className = "";
 
-    // Mapeamento da força com base na entropia (em bits) - Universal
     if (entropy < 40) {
         strength = "Fraca";
         width = (entropy / 40) * 25; 
@@ -117,7 +109,6 @@ function updateStrengthIndicator(password, mode, range) {
         className = "strength-strong";
     } else {
         strength = "Muito Forte";
-        // Limita a barra a 100%
         width = 75 + Math.min(25, (entropy - 80) / 10);
         className = "strength-very-strong";
     }
@@ -133,7 +124,7 @@ function updateStrengthIndicator(password, mode, range) {
 }
 
 
-// --- 5. LÓGICA DE GERAÇÃO (MODIFICADA PARA SUPORTAR DOIS MODOS) ---
+// --- 5. LÓGICA DE GERAÇÃO (MODIFICADA PARA SALVAR NO HISTÓRICO) ---
 
 function removeAmbiguous(charSet) {
     const regex = new RegExp(`[${ambiguousChars}]`, 'g');
@@ -141,10 +132,9 @@ function removeAmbiguous(charSet) {
 }
 
 /**
- * Geração de Passphrase (Novo)
+ * Geração de Passphrase
  */
 function generatePassphrase() {
-    // Pega o número de palavras do novo input
     const numWords = parseInt(numWordsInput.value); 
     const separator = separatorInput.value || '-';
     let passphrase = [];
@@ -162,13 +152,15 @@ function generatePassphrase() {
 
     const finalPassphrase = passphrase.join(separator);
     passwordDisplay.value = finalPassphrase;
-    // O range para passphrase é o tamanho do wordList
     updateStrengthIndicator(finalPassphrase, 'passphrase', wordList.length); 
+    
+    // NOVO: Salvar no histórico
+    saveToHistory(finalPassphrase);
 }
 
 
 /**
- * Geração de Senha por Caractere (Antigo, Refatorado)
+ * Geração de Senha por Caractere
  */
 function generateCharacterPassword() {
     const length = parseInt(lengthInput.value);
@@ -227,11 +219,11 @@ function generateCharacterPassword() {
     
     passwordDisplay.value = password;
     updateStrengthIndicator(password, 'char', allChars.length);
+
+    // NOVO: Salvar no histórico
+    saveToHistory(password);
 }
 
-/**
- * Função principal que decide qual gerador usar
- */
 function generatePassword() {
     if (modePassphrase.checked) {
         generatePassphrase();
@@ -241,7 +233,76 @@ function generatePassword() {
 }
 
 
-// --- 6. FUNÇÃO DE TOAST (Mantida) ---
+// --- 6. LÓGICA DO HISTÓRICO (NOVAS FUNÇÕES) ---
+
+/**
+ * Salva a senha gerada no sessionStorage
+ */
+function saveToHistory(password) {
+    if (!password || password.includes("Opções") || password.includes("inválido")) return;
+
+    let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
+    
+    // Evita duplicatas se a senha for regerada imediatamente
+    if (history.length === 0 || history[history.length - 1] !== password) {
+        history.push(password);
+    }
+
+    // Limita o tamanho do histórico
+    if (history.length > HISTORY_LIMIT) {
+        history.shift(); // Remove o item mais antigo (primeiro)
+    }
+
+    sessionStorage.setItem('passwordHistory', JSON.stringify(history));
+    renderHistory();
+}
+
+/**
+ * Renderiza o histórico na interface
+ */
+function renderHistory() {
+    let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
+    passwordHistoryList.innerHTML = ''; // Limpa a lista atual
+
+    if (history.length === 0) {
+        historyStatus.style.display = 'block';
+        return;
+    }
+    historyStatus.style.display = 'none';
+
+    history.forEach((pwd) => {
+        const item = document.createElement('div');
+        item.classList.add('history-item');
+        item.innerHTML = `
+            <span class="history-password">${pwd}</span>
+            <button class="history-copy-btn" data-password="${pwd}">Copiar</button>
+        `;
+        passwordHistoryList.appendChild(item);
+    });
+
+    // Adiciona listener para os novos botões de cópia
+    document.querySelectorAll('.history-copy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const pwdToCopy = e.target.getAttribute('data-password');
+            navigator.clipboard.writeText(pwdToCopy);
+            e.target.textContent = "✅ Copiado!";
+            showToast("Senha do Histórico copiada!");
+            setTimeout(() => { e.target.textContent = "Copiar"; }, 1500);
+        });
+    });
+}
+
+/**
+ * Limpa todo o histórico
+ */
+function clearHistory() {
+    sessionStorage.removeItem('passwordHistory');
+    renderHistory(); // Rerenderiza, mostrando a mensagem de vazio
+    showToast("Histórico limpo!");
+}
+
+
+// --- 7. FUNÇÃO DE TOAST (Mantida) ---
 
 function showToast(message) {
     const toast = document.createElement('div');
@@ -255,11 +316,8 @@ function showToast(message) {
     }, 3000); 
 }
 
-// --- 7. LISTENERS DE EVENTOS (MODIFICADOS) ---
+// --- 8. LISTENERS DE EVENTOS (ATUALIZADOS) ---
 
-/**
- * Gerencia a alternância entre os modos de configuração.
- */
 const handleModeChange = () => {
     const isPassphraseMode = modePassphrase.checked;
     
@@ -267,20 +325,16 @@ const handleModeChange = () => {
     passphraseSettings.style.display = isPassphraseMode ? 'block' : 'none';
     charSettings.style.display = isPassphraseMode ? 'none' : 'block';
     
-    // Altera o label do comprimento (se estiver visível)
     const lengthLabel = lengthSetting.querySelector('label');
-    lengthLabel.textContent = isPassphraseMode ? 'Comprimento da Senha:' : 'Número de Palavras:';
     
-    // Esconde o input de comprimento se estiver em modo Passphrase (pois temos 'num-words')
-    lengthInput.style.display = isPassphraseMode ? 'none' : 'block';
-
-    // Garante que o input de palavras apareça e o de comprimento seja ajustado para 12
     if (!isPassphraseMode) {
-        lengthInput.value = 12; // Reseta para um valor razoável no modo char
+        lengthInput.style.display = 'block';
         lengthSetting.querySelector('label').textContent = 'Comprimento da Senha:';
+        lengthInput.value = 12; 
     } else {
+        lengthInput.style.display = 'none'; 
         lengthSetting.querySelector('label').textContent = 'Número de Palavras:';
-        numWordsInput.value = 4; // Reseta para um valor razoável no modo passphrase
+        numWordsInput.value = 4;
     }
 
     generatePassword(); 
@@ -296,13 +350,15 @@ generateButton.addEventListener('click', generatePassword);
 // Listener para gerar (mudança de settings)
 const allSettings = document.querySelectorAll('.settings input');
 allSettings.forEach(input => {
-    // Dispara a geração ao mudar qualquer configuração
     input.addEventListener('change', generatePassword); 
 });
 
+// NOVO Listener para Limpar Histórico
+clearHistoryButton.addEventListener('click', clearHistory);
+
+
 // Listener do Botão Copiar (Mantido)
 copyButton.addEventListener('click', () => {
-    // Ajustado para incluir a mensagem de erro da passphrase
     if (passwordDisplay.value === "" || passwordDisplay.value.includes("Opções") || passwordDisplay.value.includes("Clique") || passwordDisplay.value.includes("inválido")) return;
 
     passwordDisplay.select();
@@ -325,6 +381,8 @@ copyButton.addEventListener('click', () => {
     }
 });
 
+
 document.addEventListener('DOMContentLoaded', () => {
-    handleModeChange(); // Inicializa o display correto e a primeira geração
+    handleModeChange();
+    renderHistory(); // NOVO: Carrega o histórico ao iniciar a sessão
 });
