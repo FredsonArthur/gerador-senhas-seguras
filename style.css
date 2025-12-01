@@ -2,32 +2,32 @@
 
 /* --- DEFINIÇÃO DE VARIÁVEIS DE CORES --- */
 :root {
-    /* Tema Claro (Padrão) */
-    --bg-color: #f4f4f9;
-    --container-bg: #ffffff;
-    --text-color: #333333;
-    --secondary-text: #555555;
-    --input-bg: #eeeeee;
-    --input-border: #cccccc;
-    --settings-bg: #f9f9f9;
-    --primary-color: #28a745; /* Verde para o Gerar */
-    --primary-hover: #1e7e34;
-    --button-text: #ffffff;
-    --copy-button-bg: #007bff; /* Azul para Copiar */
-    --copy-button-hover: #0056b3;
-    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* Tema Claro (Padrão) */
+    --bg-color: #f4f4f9;
+    --container-bg: #ffffff;
+    --text-color: #333333;
+    --secondary-text: #555555;
+    --input-bg: #eeeeee;
+    --input-border: #cccccc;
+    --settings-bg: #f9f9f9;
+    --primary-color: #28a745; /* Verde para o Gerar */
+    --primary-hover: #1e7e34;
+    --button-text: #ffffff;
+    --copy-button-bg: #007bff; /* Azul para Copiar */
+    --copy-button-hover: #0056b3;
+    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Tema Escuro */
 body.dark-mode {
-    --bg-color: #121212;
-    --container-bg: #1e1e1e;
-    --text-color: #e0e0e0;
-    --secondary-text: #bbbbbb;
-    --input-bg: #2d2d2d;
-    --input-border: #444444;
-    --settings-bg: #252525;
-    --shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    --bg-color: #121212;
+    --container-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --secondary-text: #bbbbbb;
+    --input-bg: #2d2d2d;
+    --input-border: #444444;
+    --settings-bg: #252525;
+    --shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Cores fixas da barra de força (mantidas para consistência visual) */
@@ -39,258 +39,317 @@ body.dark-mode {
 
 /* --- ESTILOS GERAIS (USANDO VARIÁVEIS) --- */
 body {
-    font-family: Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    transition: background-color 0.3s, color 0.3s; /* Transição suave entre temas */
+    font-family: Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    transition: background-color 0.3s, color 0.3s; /* Transição suave entre temas */
 }
 
 .container {
-    background: var(--container-bg);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    width: 90%;
-    max-width: 450px;
-    position: relative; 
-    transition: background-color 0.3s, box-shadow 0.3s;
+    background: var(--container-bg);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    width: 90%;
+    max-width: 450px;
+    position: relative; 
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 /* --- ESTILO NOVO: Botão de troca de tema --- */
 #theme-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    transition: transform 0.3s, background-color 0.3s;
-    color: var(--secondary-text); 
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: transform 0.3s, background-color 0.3s;
+    color: var(--secondary-text); 
 }
 #theme-toggle:hover {
-    transform: rotate(20deg) scale(1.1);
-    background-color: var(--settings-bg);
+    transform: rotate(20deg) scale(1.1);
+    background-color: var(--settings-bg);
 }
 
 h1 {
-    text-align: center;
-    color: var(--text-color);
-    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-color);
+    margin-bottom: 20px;
 }
 
 .output-area {
-    display: flex;
-    margin-bottom: 20px;
+    display: flex;
+    margin-bottom: 20px;
 }
 
 #password-display {
-    flex-grow: 1;
-    padding: 10px;
-    font-size: 1.1em;
-    border: 1px solid var(--input-border);
-    border-radius: 5px 0 0 5px;
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    word-break: break-all; 
-    font-family: monospace; /* Fonte monoespaçada para senhas */
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1.1em;
+    border: 1px solid var(--input-border);
+    border-radius: 5px 0 0 5px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    word-break: break-all; 
+    font-family: monospace; /* Fonte monoespaçada para senhas */
 }
 
 #copy-button {
-    padding: 10px 15px;
-    background-color: var(--copy-button-bg);
-    color: var(--button-text);
-    border: none;
-    border-radius: 0 5px 5px 0;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-weight: bold;
+    padding: 10px 15px;
+    background-color: var(--copy-button-bg);
+    color: var(--button-text);
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
 }
 
 #copy-button:hover {
-    background-color: var(--copy-button-hover);
+    background-color: var(--copy-button-hover);
 }
 
 /* Estilo para o estado "Copiado" */
 #copy-button.copied {
-    background-color: var(--primary-color);
-    font-weight: bold;
+    background-color: var(--primary-color);
+    font-weight: bold;
 }
 
 .settings {
-    background-color: var(--settings-bg);
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    transition: background-color 0.3s;
+    background-color: var(--settings-bg);
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    transition: background-color 0.3s;
 }
 
 .settings h2 {
-    font-size: 1.1em;
-    margin-top: 0;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--input-border);
-    padding-bottom: 5px;
+    font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--input-border);
+    padding-bottom: 5px;
 }
 
-/* --- ESTILOS DE INPUTS DE VALOR (COMPRIMENTO, PALAVRAS, SEPARADOR) --- */
-#length, #num-words, #separator {
+/* ---------------------------------------------------- */
+/* --- ESTILOS DE INPUTS DE VALOR (COMPRIMENTO, PALAVRAS) --- */
+/* ---------------------------------------------------- */
+
+/* NOVO: Container para alinhar Range e Number input */
+.slider-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espaço entre o slider e o input numérico */
+    width: 50%; /* Ocupa a metade direita do setting-item */
+}
+
+/* Estilo para o Range Input */
+#length-range, #num-words-range {
+    flex-grow: 1;
+    -webkit-appearance: none; /* Reset para customização */
+    appearance: none;
+    height: 8px;
+    background: var(--input-border);
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* Estilo para o Thumb (a bolinha) do Range Input - Webkit (Chrome/Safari) */
+#length-range::-webkit-slider-thumb, 
+#num-words-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--container-bg); 
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.3s;
+}
+
+/* Estilo para o Thumb (a bolinha) do Range Input - Firefox */
+#length-range::-moz-range-thumb, 
+#num-words-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--container-bg); 
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.3s;
+}
+
+/* NOVO: Estilo para o Number Input */
+#length-number, #num-words-number {
     width: 50px; 
-    text-align: center;
-    padding: 5px;
-    border: 1px solid var(--input-border);
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    border-radius: 3px;
-    /* Remover setas de number input no Firefox e Chrome */
-    -moz-appearance: textfield; 
+    text-align: center;
+    padding: 5px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 3px;
+    /* Para controlar o tamanho e aparência do input */
+    font-size: 1em;
 }
-#length::-webkit-inner-spin-button, 
-#length::-webkit-outer-spin-button,
-#num-words::-webkit-inner-spin-button,
-#num-words::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
+
+/* REMOÇÃO E CORREÇÃO: Removendo estilos antigos para os inputs de número/range */
+/* O código abaixo é removido/substituído pela nova lógica
+#length, #num-words, #separator { ... } */
+
+/* Mantendo apenas a remoção das setas para os number inputs: */
+#length-number::-webkit-inner-spin-button, 
+#length-number::-webkit-outer-spin-button,
+#num-words-number::-webkit-inner-spin-button,
+#num-words-number::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
 }
+
+/* Estilo para o separador (mantido) */
+.setting-item input[type="text"]#separator {
+    width: 30px; 
+    margin-left: 10px;
+}
+
 
 /* NOVO: Estilo para o separador de modo */
 .settings hr {
-    border: 0;
-    height: 1px;
-    background-color: var(--input-border);
-    margin: 15px 0;
+    border: 0;
+    height: 1px;
+    background-color: var(--input-border);
+    margin: 15px 0;
 }
 
 .setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .setting-item label {
-    flex-grow: 1; 
-    cursor: pointer;
-    color: var(--secondary-text);
+    flex-grow: 1; 
+    cursor: pointer;
+    color: var(--secondary-text);
 }
 .setting-item input[type="checkbox"] {
-    margin-right: 10px;
-    cursor: pointer;
-    transform: scale(1.2); 
-    accent-color: var(--primary-color); 
+    margin-right: 10px;
+    cursor: pointer;
+    transform: scale(1.2); 
+    accent-color: var(--primary-color); 
 }
 
 /* NOVO: Estilos para Rádio Buttons (Mode Selector) */
 .mode-selector {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
 .mode-selector input[type="radio"] {
-    display: none;
+    display: none;
 }
 
 .mode-selector label {
-    cursor: pointer;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-weight: bold;
-    color: var(--secondary-text);
-    border: 2px solid var(--input-border);
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    cursor: pointer;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: var(--secondary-text);
+    border: 2px solid var(--input-border);
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
 }
 
 .mode-selector input[type="radio"]:checked + label {
-    background-color: var(--copy-button-bg);
-    color: var(--button-text);
-    border-color: var(--copy-button-bg);
-}
-
-/* NOVO: Ajuste específico para o input de separador */
-.setting-item input[type="text"]#separator {
-    width: 30px; 
-    margin-left: 10px;
+    background-color: var(--copy-button-bg);
+    color: var(--button-text);
+    border-color: var(--copy-button-bg);
 }
 
 
 #generate-button {
-    width: 100%;
-    padding: 15px;
-    background-color: var(--primary-color);
-    color: var(--button-text);
-    border: none;
-    border-radius: 5px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-weight: bold;
+    width: 100%;
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: var(--button-text);
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-weight: bold;
 }
 
 #generate-button:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--primary-hover);
 }
 
 /* --- ESTILOS PARA O INDICADOR DE FORÇA --- */
 
 .strength-indicator-container {
-    margin-bottom: 10px;
+    margin-bottom: 10px;
 }
 
 .strength-indicator {
-    height: 10px;
-    background-color: var(--input-bg);
-    border-radius: 5px;
-    margin-top: 10px;
-    overflow: hidden;
-    border: 1px solid var(--input-border);
+    height: 10px;
+    background-color: var(--input-bg);
+    border-radius: 5px;
+    margin-top: 10px;
+    overflow: hidden;
+    border: 1px solid var(--input-border);
 }
 
 .strength-bar {
-    height: 100%;
-    width: 0; 
-    transition: width 0.3s ease-in-out, background-color 0.3s;
+    height: 100%;
+    width: 0; 
+    transition: width 0.3s ease-in-out, background-color 0.3s;
 }
 
 .strength-text {
-    text-align: right;
-    font-size: 0.9em;
-    font-weight: bold;
-    margin-top: 5px;
-    color: var(--secondary-text);
+    text-align: right;
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-top: 5px;
+    color: var(--secondary-text);
 }
 
 /* --- ESTILOS PARA O TOAST NOTIFICATION --- */
 #toast-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
 }
 
 .toast {
-    background-color: #333; 
-    color: white;
-    padding: 15px 20px;
-    border-radius: 5px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    margin-bottom: 10px;
-    opacity: 0; 
-    transition: opacity 0.5s, transform 0.5s;
-    transform: translateY(100%); 
+    background-color: #333; 
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+    opacity: 0; 
+    transition: opacity 0.5s, transform 0.5s;
+    transform: translateY(100%); 
 }
 
 .toast.show {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
 }
 
 
@@ -299,106 +358,110 @@ h1 {
 /* ------------------------------------------- */
 
 .history-container {
-    margin-top: 25px;
-    padding: 15px;
-    border: 1px dashed var(--input-border); 
-    border-radius: 5px;
-    background-color: var(--settings-bg);
+    margin-top: 25px;
+    padding: 15px;
+    border: 1px dashed var(--input-border); 
+    border-radius: 5px;
+    background-color: var(--settings-bg);
 }
 
 .history-container h3 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: var(--text-color);
-    font-size: 1.1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-color);
+    font-size: 1.1em;
 }
 
 #clear-history-button {
-    background: none;
-    border: 1px solid var(--copy-button-bg);
-    color: var(--copy-button-bg);
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.8em;
-    transition: background-color 0.3s, color 0.3s;
+    background: none;
+    border: 1px solid var(--copy-button-bg);
+    color: var(--copy-button-bg);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 #clear-history-button:hover {
-    background-color: var(--copy-button-bg);
-    color: var(--button-text);
+    background-color: var(--copy-button-bg);
+    color: var(--button-text);
 }
 
 .password-history-list {
-    display: flex;
-    flex-direction: column-reverse; 
-    gap: 10px;
+    display: flex;
+    flex-direction: column-reverse; 
+    gap: 10px;
 }
 
 .history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--input-bg);
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid var(--input-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--input-bg);
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--input-border);
 }
 
 .history-password {
-    flex-grow: 1;
-    font-family: monospace; 
-    font-size: 0.95em;
-    overflow-x: auto; 
-    white-space: nowrap;
-    margin-right: 10px;
-    color: var(--text-color);
+    flex-grow: 1;
+    font-family: monospace; 
+    font-size: 0.95em;
+    overflow-x: auto; 
+    white-space: nowrap;
+    margin-right: 10px;
+    color: var(--text-color);
 }
 
 .history-copy-btn {
-    padding: 5px 10px;
-    background-color: var(--copy-button-bg); 
-    color: var(--button-text);
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.8em;
-    transition: background-color 0.3s;
+    padding: 5px 10px;
+    background-color: var(--copy-button-bg); 
+    color: var(--button-text);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.3s;
 }
 
 .history-copy-btn:hover {
-    background-color: var(--copy-button-hover);
+    background-color: var(--copy-button-hover);
 }
 
 .history-status {
-    color: var(--secondary-text);
-    font-style: italic;
-    text-align: center;
-    margin-top: 5px;
-    font-size: 0.9em;
-    padding: 10px; 
-    border: 1px solid var(--input-border);
-    border-radius: 4px;
-    background-color: var(--input-bg);
+    color: var(--secondary-text);
+    font-style: italic;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 0.9em;
+    padding: 10px; 
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
 }
 
 /* --- RESPONSIVIDADE BÁSICA --- */
 @media (max-width: 500px) {
-    .container {
-        padding: 20px;
-    }
-    .output-area {
-        flex-direction: column;
-    }
-    #password-display {
-        border-radius: 5px; /* Remove o arredondamento de canto após a quebra de linha */
-        margin-bottom: 10px;
-    }
-    #copy-button {
-        border-radius: 5px;
-        width: 100%;
+    .container {
+        padding: 20px;
+    }
+    .output-area {
+        flex-direction: column;
+    }
+    #password-display {
+        border-radius: 5px; /* Remove o arredondamento de canto após a quebra de linha */
+        margin-bottom: 10px;
+    }
+    #copy-button {
+        border-radius: 5px;
+        width: 100%;
+    }
+    /* Ajuste de responsividade para o slider-group em telas menores */
+    .slider-group {
+        width: 60%; /* Dê mais espaço para o input numérico em telas menores, se necessário */
     }
 }

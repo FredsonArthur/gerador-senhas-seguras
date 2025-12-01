@@ -16,10 +16,10 @@
 
         <div class="mode-selector">
             <input type="radio" id="mode-char" name="gen-mode" value="char" checked>
-            <label for="mode-char">Caracteres</label>
+            <label for="mode-char">Senha por Caracteres</label>
 
             <input type="radio" id="mode-passphrase" name="gen-mode" value="passphrase">
-            <label for="mode-passphrase">Passphrase</label>
+            <label for="mode-passphrase">Passphrase (Frase-Senha)</label>
         </div>
         
         <div class="output-area">
@@ -40,13 +40,13 @@
                 <h2>Configurações de Caracteres</h2>
 
                 <div class="setting-item">
-                    <label for="length">Comprimento da Senha:</label>
-                    <div class="slider-container">
-                        <input type="range" id="length" min="6" max="64" value="12">
-                        <span id="length-value" class="length-value">12</span>
+                    <label for="length-number">Comprimento da Senha:</label>
+                    <div class="slider-group">
+                        <input type="range" id="length-range" min="6" max="64" value="12">
+                        <input type="number" id="length-number" min="6" max="64" value="12">
                     </div>
                 </div>
-
+                
                 <hr>
 
                 <div class="setting-item">
@@ -71,7 +71,7 @@
 
                 <div class="setting-item">
                     <input type="checkbox" id="include-accented-chars">
-                    <label for="include-accented-chars">Incluir Caracteres Acentuados (áàãéè...)</label>
+                    <label for="include-accented-chars">Incluir Acentuados (áàãéè...)</label>
                 </div>
                 
                 <div class="setting-item">
@@ -84,10 +84,10 @@
                 <h2>Configurações de Passphrase</h2>
 
                 <div class="setting-item">
-                    <label for="num-words">Número de Palavras:</label>
-                    <div class="slider-container">
-                        <input type="range" id="num-words" min="3" max="10" value="4">
-                        <span id="num-words-value" class="length-value">4</span>
+                    <label for="num-words-number">Número de Palavras:</label>
+                    <div class="slider-group">
+                        <input type="range" id="num-words-range" min="3" max="10" value="4">
+                        <input type="number" id="num-words-number" min="3" max="10" value="4">
                     </div>
                 </div>
                 
@@ -97,18 +97,21 @@
                     <label for="separator">Separador:</label>
                     <input type="text" id="separator" maxlength="1" value="-">
                 </div>
-            </div>
+
+                </div>
         </div>
         
         <button id="generate-button">Gerar Senha</button>
 
         <div class="history-container">
-            <h3>📝 Histórico da Sessão 
+            <div class="history-header">
+                <h3>📝 Histórico da Sessão</h3>
                 <button id="clear-history-button" title="Limpar todas as senhas armazenadas nesta aba.">Limpar</button>
-            </h3>
+            </div>
+            
             <p id="history-status" class="history-status">O histórico está vazio ou foi limpo.</p>
             <div id="password-history-list" class="password-history-list">
-            </div>
+                </div>
             <p class="history-note">As senhas são apagadas ao fechar a aba/navegador.</p>
         </div>
         
