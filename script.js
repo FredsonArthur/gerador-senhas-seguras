@@ -12,33 +12,25 @@ const includeUppercase = document.getElementById('include-uppercase');
 const includeLowercase = document.getElementById('include-lowercase');
 const includeNumbers = document.getElementById('include-numbers');
 const includeSymbols = document.getElementById('include-symbols');
-const includeAccentedChars = document.getElementById('include-accented-chars'); // NOVO ELEMENTO
+const includeAccentedChars = document.getElementById('include-accented-chars');
 const passwordDisplay = document.getElementById('password-display');
 const generateButton = document.getElementById('generate-button');
 const copyButton = document.getElementById('copy-button');
-const strengthBar = document.getElementById('strength-bar'); // NOVO ELEMENTO
-const strengthText = document.getElementById('strength-text'); // NOVO ELEMENTO
+const strengthBar = document.getElementById('strength-bar'); 
+const strengthText = document.getElementById('strength-text');
+// NOVO ELEMENTO: Referência ao container do Toast
+const toastContainer = document.getElementById('toast-container');
 
 
 // --- 3. FUNÇÕES DE LÓGICA ---
 
 /**
- * Calcula a entropia (força) da senha usando a fórmula de Shannon.
- * Entropia (bits) = log2(R^L) = L * log2(R)
- * Onde L é o comprimento da senha e R é o tamanho do conjunto de caracteres (range).
+ * Calcula a entropia (força) da senha.
  */
 function calculateStrength(password, range) {
     if (password.length === 0) return 0;
-    
     const length = password.length;
-    
-    // O range (R) é o tamanho do conjunto de caracteres que foi usado.
-    // Usamos o 'range' passado como argumento (o tamanho da string 'allChars').
-    
-    // Calcula a Entropia (bits)
-    // Math.log2() é o logaritmo na base 2.
     const entropy = length * Math.log2(range);
-    
     return entropy;
 }
 
@@ -51,8 +43,6 @@ function updateStrengthIndicator(password, allChars) {
     let width = 0;
     let className = "";
 
-    // Mapeamento da força com base na entropia (em bits)
-    // Fontes recomendam: 40 (fraca), 60 (média), 80+ (forte)
     if (entropy < 40) {
         strength = "Fraca";
         width = (entropy / 40) * 25; 
@@ -67,16 +57,14 @@ function updateStrengthIndicator(password, allChars) {
         className = "strength-strong";
     } else {
         strength = "Muito Forte";
-        width = 75 + Math.min(25, (entropy - 80) / 10); // Limita em 100%
+        width = 75 + Math.min(25, (entropy - 80) / 10);
         className = "strength-very-strong";
     }
 
-    // Aplica os estilos ao DOM
     strengthBar.style.width = width.toFixed(2) + "%";
     strengthBar.className = `strength-bar ${className}`;
     strengthText.textContent = `${strength} (${entropy.toFixed(1)} bits)`;
     
-    // Limpa o indicador se a senha estiver vazia (em caso de erro)
     if (password.length === 0) {
         strengthBar.style.width = "0%";
         strengthText.textContent = "";
@@ -90,9 +78,8 @@ function generatePassword() {
     const length = parseInt(lengthInput.value);
     let allChars = "";
     let password = "";
-    let requiredChars = []; // Para garantir pelo menos um de cada tipo selecionado
+    let requiredChars = []; 
 
-    // Constrói a string de caracteres possíveis e o array de caracteres obrigatórios
     if (includeUppercase.checked) {
         allChars += upperCaseChars;
         requiredChars.push(upperCaseChars);
@@ -109,49 +96,74 @@ function generatePassword() {
         allChars += symbolChars;
         requiredChars.push(symbolChars);
     }
-    // NOVO: Adiciona caracteres acentuados
     if (includeAccentedChars.checked) {
         allChars += accentedChars;
         requiredChars.push(accentedChars);
     }
     
-    // --- LÓGICA DE GERAÇÃO ---
     if (allChars.length === 0) {
         passwordDisplay.value = "Selecione pelo menos uma opção!";
         updateStrengthIndicator("", 0);
         return;
     }
     
-    // 1. Garante que todos os tipos selecionados estejam presentes (melhoria de segurança)
+    // 1. Garante um de cada tipo
     for (const charSet of requiredChars) {
         const randomIndex = Math.floor(Math.random() * charSet.length);
         password += charSet[randomIndex];
     }
     
-    // 2. Preenche o restante do comprimento com caracteres aleatórios
+    // 2. Preenche o restante
     const remainingLength = length - requiredChars.length;
     for (let i = 0; i < remainingLength; i++) {
         const randomIndex = Math.floor(Math.random() * allChars.length);
         password += allChars[randomIndex];
     }
 
-    // 3. Embaralha a senha para que os caracteres obrigatórios não fiquem sempre no início
+    // 3. Embaralha
     password = password.split('').sort(() => 0.5 - Math.random()).join('');
     
     passwordDisplay.value = password;
-    
-    // 4. Atualiza o indicador de força
     updateStrengthIndicator(password, allChars);
 }
 
-// --- 4. LISTENERS DE EVENTOS ---
+// --- 4. FUNÇÃO DE TOAST (NOVA) ---
 
-// Listener para o botão "Gerar"
+/**
+ * Cria e exibe a notificação flutuante
+ */
+function showToast(message) {
+    // 1. Cria o elemento
+    const toast = document.createElement('div');
+    toast.classList.add('toast');
+    toast.textContent = message;
+
+    // 2. Adiciona ao container
+    toastContainer.appendChild(toast);
+
+    // 3. Animação de entrada (pequeno delay para o CSS funcionar)
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // 4. Remove após 3 segundos
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // Espera a animação de saída terminar antes de remover do DOM
+        setTimeout(() => {
+            toast.remove();
+        }, 500); 
+    }, 3000); 
+}
+
+// --- 5. LISTENERS DE EVENTOS ---
+
 generateButton.addEventListener('click', generatePassword);
 
-// Listener para o botão "Copiar" (melhoria de feedback)
+// Listener do Botão Copiar (ATUALIZADO COM FEEDBACK VISUAL)
 copyButton.addEventListener('click', () => {
-    if (passwordDisplay.value === "" || passwordDisplay.value.includes("Selecione")) return;
+    // Validação básica
+    if (passwordDisplay.value === "" || passwordDisplay.value.includes("Selecione") || passwordDisplay.value.includes("Clique em Gerar")) return;
 
     passwordDisplay.select();
     passwordDisplay.setSelectionRange(0, 99999); 
@@ -159,15 +171,22 @@ copyButton.addEventListener('click', () => {
     try {
         navigator.clipboard.writeText(passwordDisplay.value);
         
-        // Feedback visual
-        copyButton.textContent = "Copiado!";
+        // --- A. Feedback Visual no Botão ---
+        copyButton.innerHTML = "✅ Copiado!"; // Muda texto/ícone
+        copyButton.classList.add('copied');   // Muda cor (via CSS)
+
+        // --- B. Feedback Visual Flutuante (Toast) ---
+        showToast("Senha copiada para a área de transferência!");
+        
+        // --- C. Resetar Botão após 1.5s ---
         setTimeout(() => {
-            copyButton.textContent = "Copiar";
+            copyButton.innerHTML = "Copiar";
+            copyButton.classList.remove('copied');
         }, 1500); 
+
     } catch (err) {
-        alert("Falha ao copiar. Tente selecionar o texto manualmente.");
+        showToast("Erro ao copiar. Tente manualmente.");
     }
 });
 
-// Opcional: Gera uma senha inicial ao carregar a página
 document.addEventListener('DOMContentLoaded', generatePassword);
