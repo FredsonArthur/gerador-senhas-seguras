@@ -14,12 +14,20 @@
 
         <h1>🔐 Gerador de Senhas Seguras</h1>
 
+        <div class="mode-selector">
+            <input type="radio" id="mode-char" name="gen-mode" value="char" checked>
+            <label for="mode-char">Caracteres</label>
+
+            <input type="radio" id="mode-passphrase" name="gen-mode" value="passphrase">
+            <label for="mode-passphrase">Passphrase</label>
+        </div>
+        
         <div class="output-area">
             <input type="text" id="password-display" readonly value="Clique em Gerar">
             <button id="copy-button">Copiar</button>
         </div>
         
-        <div class="strength-meter">
+        <div class="strength-indicator-container">
             <div class="strength-indicator">
                 <div id="strength-bar" class="strength-bar"></div>
             </div>
@@ -27,36 +35,20 @@
         </div>
         
         <div class="settings">
-            <h2>Configurações</h2>
             
-            <div class="setting-item">
-                <label>Tipo de Senha:</label>
-                <div>
-                    <input type="radio" id="mode-char" name="gen-mode" value="char" checked>
-                    <label for="mode-char">Caractere</label>
-                    <input type="radio" id="mode-passphrase" name="gen-mode" value="passphrase">
-                    <label for="mode-passphrase">Passphrase</label>
-                </div>
-            </div>
-            
-            <hr>
-            <div class="setting-item" id="length-setting">
-                <label for="length">Comprimento da Senha:</label>
-                <input type="number" id="length" min="8" max="30" value="12">
-            </div>
-
-            <div id="passphrase-settings" style="display: none;">
-                <div class="setting-item">
-                    <label for="num-words">Número de Palavras:</label>
-                    <input type="number" id="num-words" min="3" max="6" value="4">
-                </div>
-                <div class="setting-item">
-                    <label for="separator">Separador:</label>
-                    <input type="text" id="separator" maxlength="1" value="-">
-                </div>
-            </div>
-
             <div id="char-settings">
+                <h2>Configurações de Caracteres</h2>
+
+                <div class="setting-item">
+                    <label for="length">Comprimento da Senha:</label>
+                    <div class="slider-container">
+                        <input type="range" id="length" min="6" max="64" value="12">
+                        <span id="length-value" class="length-value">12</span>
+                    </div>
+                </div>
+
+                <hr>
+
                 <div class="setting-item">
                     <input type="checkbox" id="include-uppercase" checked>
                     <label for="include-uppercase">Incluir Maiúsculas (A-Z)</label>
@@ -87,6 +79,25 @@
                     <label for="exclude-ambiguous" title="Remove caracteres como i, l, 1, L, o, 0, O">Excluir Ambíguos (i, l, 1, 0, o)</label>
                 </div>
             </div>
+
+            <div id="passphrase-settings" style="display: none;">
+                <h2>Configurações de Passphrase</h2>
+
+                <div class="setting-item">
+                    <label for="num-words">Número de Palavras:</label>
+                    <div class="slider-container">
+                        <input type="range" id="num-words" min="3" max="10" value="4">
+                        <span id="num-words-value" class="length-value">4</span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="setting-item">
+                    <label for="separator">Separador:</label>
+                    <input type="text" id="separator" maxlength="1" value="-">
+                </div>
+            </div>
         </div>
         
         <button id="generate-button">Gerar Senha</button>
@@ -95,9 +106,9 @@
             <h3>📝 Histórico da Sessão 
                 <button id="clear-history-button" title="Limpar todas as senhas armazenadas nesta aba.">Limpar</button>
             </h3>
-            <p id="history-status" class="history-status" style="display: none;">O histórico está vazio ou foi limpo.</p>
+            <p id="history-status" class="history-status">O histórico está vazio ou foi limpo.</p>
             <div id="password-history-list" class="password-history-list">
-                </div>
+            </div>
             <p class="history-note">As senhas são apagadas ao fechar a aba/navegador.</p>
         </div>
         
