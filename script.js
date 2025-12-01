@@ -3,8 +3,9 @@ const lowerCaseChars = "abcdefghijklmnopqrstuvwxyz";
 const upperCaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const numberChars = "0123456789";
 const symbolChars = "!@#$%^&*()_+[]{}|;:,.<>?/~`"; 
-// NOVO CONJUNTO: Caracteres Acentuados (Maiúsculas e Minúsculas)
 const accentedChars = "áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ";
+// NOVO: Caracteres considerados ambíguos para leitura
+const ambiguousChars = "il1Lo0O"; 
 
 // --- 2. REFERÊNCIAS AO DOM ---
 const lengthInput = document.getElementById('length');
@@ -13,20 +14,51 @@ const includeLowercase = document.getElementById('include-lowercase');
 const includeNumbers = document.getElementById('include-numbers');
 const includeSymbols = document.getElementById('include-symbols');
 const includeAccentedChars = document.getElementById('include-accented-chars');
+const excludeAmbiguous = document.getElementById('exclude-ambiguous'); // NOVO
 const passwordDisplay = document.getElementById('password-display');
 const generateButton = document.getElementById('generate-button');
 const copyButton = document.getElementById('copy-button');
 const strengthBar = document.getElementById('strength-bar'); 
 const strengthText = document.getElementById('strength-text');
-// NOVO ELEMENTO: Referência ao container do Toast
 const toastContainer = document.getElementById('toast-container');
+const themeToggleBtn = document.getElementById('theme-toggle'); // NOVO
 
 
-// --- 3. FUNÇÕES DE LÓGICA ---
+// --- 3. LÓGICA DE TEMA (DARK MODE) ---
 
 /**
- * Calcula a entropia (força) da senha.
+ * Inicializa e gerencia a persistência do Modo Escuro.
  */
+(function initializeTheme() {
+    const currentTheme = localStorage.getItem('theme');
+    
+    // Aplica o tema salvo (se existir)
+    if (currentTheme === "dark") {
+      document.body.classList.add("dark-mode");
+      themeToggleBtn.textContent = "☀️"; // Ícone de sol para tema escuro
+    } else {
+      themeToggleBtn.textContent = "🌙"; // Ícone de lua para tema claro
+    }
+
+    // Listener para alternar o tema
+    themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      
+      let theme = "light";
+      if (document.body.classList.contains("dark-mode")) {
+        theme = "dark";
+        themeToggleBtn.textContent = "☀️";
+      } else {
+        themeToggleBtn.textContent = "🌙";
+      }
+      // Salva a preferência
+      localStorage.setItem("theme", theme);
+    });
+})();
+
+
+// --- 4. FUNÇÕES DE LÓGICA ---
+
 function calculateStrength(password, range) {
     if (password.length === 0) return 0;
     const length = password.length;
@@ -34,9 +66,6 @@ function calculateStrength(password, range) {
     return entropy;
 }
 
-/**
- * Atualiza o indicador visual de força (barra e texto).
- */
 function updateStrengthIndicator(password, allChars) {
     const entropy = calculateStrength(password, allChars.length);
     let strength = "";
@@ -72,37 +101,58 @@ function updateStrengthIndicator(password, allChars) {
 }
 
 /**
- * Função principal para gerar a senha
+ * Função Auxiliar para remover caracteres ambíguos de uma string
  */
+function removeAmbiguous(charSet) {
+    // Regex global para remover 'i', 'l', '1', 'L', 'o', '0', 'O'
+    const regex = new RegExp(`[${ambiguousChars}]`, 'g');
+    return charSet.replace(regex, '');
+}
+
+
 function generatePassword() {
     const length = parseInt(lengthInput.value);
+    const isAmbiguousExcluded = excludeAmbiguous.checked;
+
     let allChars = "";
     let password = "";
     let requiredChars = []; 
 
+    // Função interna para processar o conjunto (adicionar e filtrar se necessário)
+    const processCharSet = (charSet) => {
+        if (isAmbiguousExcluded) {
+            return removeAmbiguous(charSet);
+        }
+        return charSet;
+    };
+
+    // Constrói a string e o array de requisitos, aplicando o filtro de ambíguos
     if (includeUppercase.checked) {
-        allChars += upperCaseChars;
-        requiredChars.push(upperCaseChars);
+        const chars = processCharSet(upperCaseChars);
+        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
     }
     if (includeLowercase.checked) {
-        allChars += lowerCaseChars;
-        requiredChars.push(lowerCaseChars);
+        const chars = processCharSet(lowerCaseChars);
+        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
     }
     if (includeNumbers.checked) {
-        allChars += numberChars;
-        requiredChars.push(numberChars);
+        const chars = processCharSet(numberChars);
+        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
     }
     if (includeSymbols.checked) {
-        allChars += symbolChars;
-        requiredChars.push(symbolChars);
+        // Símbolos (mantidos, mas aplicamos o filtro caso haja sobreposição acidental)
+        const chars = processCharSet(symbolChars);
+        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
     }
     if (includeAccentedChars.checked) {
+        // Acentuados (mantidos, não ambíguos)
         allChars += accentedChars;
         requiredChars.push(accentedChars);
     }
     
+    // Validação
     if (allChars.length === 0) {
-        passwordDisplay.value = "Selecione pelo menos uma opção!";
+        passwordDisplay.value = "Opções insuficientes!";
         updateStrengthIndicator("", 0);
         return;
     }
@@ -127,43 +177,36 @@ function generatePassword() {
     updateStrengthIndicator(password, allChars);
 }
 
-// --- 4. FUNÇÃO DE TOAST (NOVA) ---
 
-/**
- * Cria e exibe a notificação flutuante
- */
+// --- 5. FUNÇÃO DE TOAST ---
+
 function showToast(message) {
-    // 1. Cria o elemento
     const toast = document.createElement('div');
     toast.classList.add('toast');
     toast.textContent = message;
-
-    // 2. Adiciona ao container
     toastContainer.appendChild(toast);
-
-    // 3. Animação de entrada (pequeno delay para o CSS funcionar)
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-
-    // 4. Remove após 3 segundos
+    setTimeout(() => { toast.classList.add('show'); }, 10);
     setTimeout(() => {
         toast.classList.remove('show');
-        // Espera a animação de saída terminar antes de remover do DOM
-        setTimeout(() => {
-            toast.remove();
-        }, 500); 
+        setTimeout(() => { toast.remove(); }, 500); 
     }, 3000); 
 }
 
-// --- 5. LISTENERS DE EVENTOS ---
+// --- 6. LISTENERS DE EVENTOS ---
 
 generateButton.addEventListener('click', generatePassword);
 
-// Listener do Botão Copiar (ATUALIZADO COM FEEDBACK VISUAL)
+// Garante que a senha seja regerada ao mudar as configurações
+const settingCheckboxes = document.querySelectorAll('.settings input[type="checkbox"], #length');
+settingCheckboxes.forEach(input => {
+    input.addEventListener('change', generatePassword);
+});
+
+
+// Listener do Botão Copiar
 copyButton.addEventListener('click', () => {
     // Validação básica
-    if (passwordDisplay.value === "" || passwordDisplay.value.includes("Selecione") || passwordDisplay.value.includes("Clique em Gerar")) return;
+    if (passwordDisplay.value === "" || passwordDisplay.value.includes("Opções") || passwordDisplay.value.includes("Clique")) return;
 
     passwordDisplay.select();
     passwordDisplay.setSelectionRange(0, 99999); 
@@ -171,21 +214,18 @@ copyButton.addEventListener('click', () => {
     try {
         navigator.clipboard.writeText(passwordDisplay.value);
         
-        // --- A. Feedback Visual no Botão ---
-        copyButton.innerHTML = "✅ Copiado!"; // Muda texto/ícone
-        copyButton.classList.add('copied');   // Muda cor (via CSS)
-
-        // --- B. Feedback Visual Flutuante (Toast) ---
-        showToast("Senha copiada para a área de transferência!");
+        // Feedback Visual
+        copyButton.innerHTML = "✅ Copiado!";
+        copyButton.classList.add('copied');
+        showToast("Senha copiada com sucesso!");
         
-        // --- C. Resetar Botão após 1.5s ---
         setTimeout(() => {
             copyButton.innerHTML = "Copiar";
             copyButton.classList.remove('copied');
         }, 1500); 
 
     } catch (err) {
-        showToast("Erro ao copiar. Tente manualmente.");
+        showToast("Erro ao copiar.");
     }
 });
 

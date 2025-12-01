@@ -9,6 +9,9 @@
 <body>
 
     <div class="container">
+        
+        <button id="theme-toggle" title="Alternar Tema">🌙</button>
+
         <h1>🔐 Gerador de Senhas Seguras</h1>
 
         <div class="output-area">
@@ -54,6 +57,11 @@
             <div class="setting-item">
                 <input type="checkbox" id="include-accented-chars">
                 <label for="include-accented-chars">Incluir Caracteres Acentuados (áàãéè...)</label>
+            </div>
+            
+            <div class="setting-item">
+                <input type="checkbox" id="exclude-ambiguous">
+                <label for="exclude-ambiguous" title="Remove caracteres como i, l, 1, L, o, 0, O">Excluir Ambíguos (i, l, 1, 0, o)</label>
             </div>
         </div>
 
