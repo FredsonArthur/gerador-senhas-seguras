@@ -1,0 +1,29 @@
+# ------------------------------------
+# Arquivos de Sistema e de Editor
+# ------------------------------------
+
+# macOS / Linux
+.DS_Store
+.Trash
+
+# Windows
+Thumbs.db
+
+# VS Code - Arquivos de configuração específicos do usuário
+.vscode/
+
+# Live Server (se você estiver usando)
+# O Live Server não cria arquivos que precisam ser ignorados
+# Mas é bom ter um template para editores/IDEs
+*~
+
+# ------------------------------------
+# Dependências e Builds (para projetos futuros)
+# ------------------------------------
+
+# Node.js (se você usasse npm)
+# node_modules/
+
+# Logs e arquivos temporários
+*.log
+temp/
