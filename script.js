@@ -1,9 +1,13 @@
-/* --- script.js - CÓDIGO FINAL COM TEMA CORRIGIDO E SINCRONIZAÇÃO TOTAL --- */
+/* --- script.js - CÓDIGO FINAL E LIMPO (Lógica Pura) --- */
 
 // --- 1. CONFIGURAÇÕES E VARIÁVEIS GLOBAIS ---
-const wordList = [
-    "abacate", "abelha", "abobora", "abrigo", "acabar", "acender", "acesso", "achado", "acordo", "acucar", "adeus", "adorar", "africa", "agora", "aguia", "ajuda", "alarme", "album", "alegre", "algum", "alianca", "alivio", "aluno", "amarelo", "amigo", "amor", "anjo", "antena", "antigo", "anual", "apagar", "apoio", "aprender", "area", "arroz", "arvore", "asilo", "assinar", "atencao", "atirar", "atleta", "atraso", "audaz", "auto", "aviao", "aviso", "avó", "azul", "bairro", "bala", "banco", "bandeira", "barco", "barulho", "base", "batalha", "batom", "beijo", "beleza", "bencao", "besta", "bicicleta", "bingo", "bola", "bonito", "borboleta", "bota", "braco", "briga", "bronze", "buraco", "cabeca", "cabo", "cabra", "cachos", "cadeira", "caderno", "cafe", "caixa", "cajado", "calca", "calor", "calvo", "caminho", "campina", "campo", "canal", "cancao", "caneta", "canto", "capaz", "capital", "carne", "carro", "carta", "casa", "casaco", "casca", "casco", "castigo", "castelo", "casual", "catarata", "cauda", "causa", "cautela", "cedo", "cebola", "celula", "cento", "cerca", "certo", "ceu", "chama", "chao", "chave", "cheiro", "chico", "chifre", "choque", "chuva", "cidade", "cigarro", "cinco", "cinema", "cinto", "circo", "cisco", "civil", "claro", "classe", "cliente", "clima", "cobra", "coche", "codigo", "coelho", "coisa", "colega", "colher", "coluna", "comando", "comida", "comum", "conta", "conto", "copa", "copia", "coracao", "corpo", "corrente", "coruja", "corvo", "costa", "costas", "couro", "coyote", "cozinha", "cravo", "crianca", "crise", "cristal", "cruel", "cubo", "cueca", "culpa", "cultura", "curto", "curva", "custo", "dado", "dama", "danca", "data", "defeito", "degrau", "delicado", "dentro", "depois", "desejo", "destino", "deus", "dia", "diabo", "dieta", "dinheiro", "direito", "doce", "dois", "dormir", "dose", "ducha", "duelo", "duvida", "duzias", "eletrico", "elemento", "elevar", "embarcar", "emissao", "emocoes", "emprego", "energia", "enigma", "ensinar", "entrar", "equipe", "erro", "escola", "escuro", "esforco", "espaco", "espero", "esporte", "esposa", "estrada", "estrela", "eterno", "etica", "evento", "exame", "exemplo", "extra", "facil", "faixa", "familia", "famoso", "farol", "fauna", "favor", "faxina", "fazenda", "feijao", "feliz", "ferro", "festa", "fevereiro", "ficha", "fiel", "figura", "filme", "filho", "final", "fio", "fique", "flauta", "flor", "folha", "fonte", "forma", "forte", "foto", "frase", "frio", "fruta", "fuga", "fundo", "futuro", "galho", "gancho", "ganso", "garfo", "gato", "gema", "geral", "gesso", "gloria", "gota", "graca", "grao", "grande", "grau", "gravata", "grilo", "grosso", "grupo", "guia", "harmonia", "haste", "heroi", "hoje", "homem", "honra", "hotel", "humano", "ideia", "idoso", "igreja", "ilha", "ilha", "impacto", "impar", "imposto", "incenso", "indice", "infancia", "inferior", "inicio", "injuria", "inseto", "interno", "intruso", "inverno", "irmao", "janela", "jantar", "jardim", "jato", "joelho", "jogador", "jornal", "jovem", "juiz", "julho", "junho", "juros", "justo", "kilowatt", "labor", "lago", "laje", "lama", "lamento", "laranja", "largo", "latido", "lavar", "lazer", "ledo", "legume", "leite", "leitura", "lento", "leopardo", "letra", "leve", "libra", "licao", "lider", "limao", "limite", "limpo", "linha", "linho", "liso", "livro", "local", "lodo", "loja", "lona", "longo", "louco", "louro", "luar", "lugar", "luz", "macaco", "macio", "maior", "mala", "mamae", "manha", "mapa", "marca", "marfim", "margem", "marido", "martelo", "massa", "mate", "maximo", "medico", "meio", "melao", "melhor", "menos", "mente", "mesa", "metal", "metro", "mexer", "mico", "micro", "militar", "milho", "mimado", "minha", "minuto", "misto", "moda", "moeda", "mole", "moral", "morder", "morte", "mosquito", "motor", "muito", "mundo", "musica", "nabo", "nacao", "nada", "nariz", "natal", "navio", "negar", "neve", "ninho", "nivel", "noite", "noivo", "nome", "normal", "norte", "nota", "nuvem", "objeto", "obrigado", "oceano", "oito", "olhar", "olho", "ombro", "onda", "onibus", "onze", "opera", "opcao", "ordem", "organico", "ouro", "outono", "outubro", "oval", "ouvido", "padre", "pagar", "pagina", "pai", "paixao", "palavra", "palco", "palha", "palito", "panela", "pano", "papel", "parada", "parque", "parte", "passaro", "passeio", "patio", "pato", "pausa", "paz", "pedaco", "pedra", "peixe", "pelo", "pena", "penca", "penhasco", "pensar", "perigo", "perna", "pessoa", "petala", "piano", "picar", "pilha", "pimenta", "pingo", "pintar", "pipa", "pirata", "piscina", "pista", "placa", "plano", "planta", "pneu", "poco", "poeira", "policia", "polo", "ponta", "ponte", "populacao", "porco", "porta", "porte", "possivel", "postal", "pouco", "praca", "prato", "preto", "primavera", "primo", "prisioneiro", "problema", "processo", "proximo", "publico", "pudim", "pulseira", "quadra", "quadro", "qual", "quase", "quatro", "queijo", "quente", "quinta", "quiro", "rabo", "raiz", "ramo", "rapido", "rato", "razao", "real", "remedio", "remo", "reparo", "resgate", "resumo", "reuniao", "reverso", "revista", "rico", "rio", "risco", "ritmo", "rocha", "roda", "rola", "romance", "roupa", "rua", "ruido", "rumo", "sabao", "sabor", "saco", "salada", "saldo", "salto", "samba", "sandalia", "sangue", "santo", "sapo", "saudade", "saude", "seco", "seguro", "seis", "selva", "sempre", "senha", "sentido", "setembro", "sete", "sexo", "shampoo", "sinal", "sino", "situacao", "socio", "sofa", "sol", "sopa", "sorriso", "sorte", "subida", "sucesso", "sujo", "superior", "tabaco", "tala", "talento", "tambor", "tampa", "tarde", "tarifa", "tatu", "taza", "tecido", "tecla", "telefone", "televisao", "tempo", "tendencia", "terno", "terra", "texto", "tigre", "tijolo", "tinta", "tinto", "tirar", "titulo", "tocha", "todo", "tomate", "topo", "touca", "toque", "touro", "trabalho", "trem", "tres", "tribo", "trigo", "troca", "tronco", "tufo", "tulipa", "turma", "um", "uniao", "unico", "urbano", "urso", "util", "uvida", "vaca", "vagao", "valvula", "vantagem", "vaso", "veiculo", "veia", "vento", "verde", "vermelho", "versao", "vespa", "vestido", "vez", "viagem", "vida", "vidro", "vilarejo", "vinho", "violeta", "virgem", "virtude", "vista", "vitoria", "vitrola", "vivo", "voo", "volume", "voto", "zebra", "zero", "ziguezague", "zona", "zoologico", "alface", "alho", "ameixa", "amendoa", "ananas", "apito", "areia", "asno", "avela", "azeite", "bagagem", "bailarina", "batata", "bau", "bexiga", "bilhete", "biscoito", "bule", "buzina", "cabide", "cacau", "cacto", "caneca", "carvao", "cegonha", "cenoura", "cereja", "cesta", "colete", "dardo", "dedo", "diamante", "disco", "doença", "escada", "esponja", "etiqueta", "foguete", "fungo", "gaiola", "gaveta", "gelo", "gola", "gota", "grama", "guitarra", "iglu", "joia", "lama", "lanterna", "lata", "lixa", "macarrao", "maçã", "meia", "milho", "novelo", "óculos", "orelha", "ovo", "pincel", "pneu", "pomar", "pote", "pulga", "queijo", "raio", "remo", "serra", "sino", "tesoura", "uva", "vela", "xadrez", "xicara", "yoga", "bambu", "caracol", "castanha", "cogumelo", "esmalte", "espinho", "giz", "luva", "mochila", "noz", "pena", "pinha", "rolha", "sabonete", "tapete", "vela", "zinco", "acougue", "alicate", "batedor", "cabide", "carimbo", "chicote", "chifre", "chaveiro", "clinica", "cobertor", "colmeia", "desenho", "domino", "escudo", "esfirra", "espelho", "fivela", "gasolina", "guarda", "igreja", "isqueiro", "jardim", "labirinto", "martelo", "moinho", "passaporte", "patinete", "penhasco", "pistola", "queimada", "raquete", "seringa", "tabuleiro", "tirolesa", "triciclo", "vassoura", "ventilador", "xarope", "zagueiro", "abacaxi", "abajur", "adorno", "agulha", "almofada", "ampulheta", "anzol", "aquario", "arame", "arco", "asfalto", "aspirador", "azulejo", "bacia", "bambu", "bandeja", "barraca", "bengala", "bermuda", "beterraba", "bisturi", "bolsa", "bomba", "borracha", "bule", "cabeca", "cachecol", "cadeado", "caju", "canivete", "capuz", "carroca", "cartola", "casaco", "castical", "catavento", "cerca", "chiclete", "chinelo", "chupeta", "clipe", "coador", "cofrinho", "colar", "compasso", "concha", "controle", "cordao", "cotovelo", "cubo", "cunha", "decalque", "dedal", "despertador", "dicionario", "diploma", "elevador", "envelope", "escrivaninha", "esfregao", "esquilo", "estetoscopio", "extintor", "fantoche", "ferradura", "fichario", "filtro", "funil", "gaiola", "garrafa", "geladeira", "gravura", "guarda-chuva", "guardanapo", "hammock", "harpia", "hastes", "horta", "hotel", "iate", "impermeavel", "imã", "jaleito", "jaula", "jegue", "joias", "jornal", "kilt", "lacre", "lampada", "lapis", "lençol", "lixeira", "lousa", "macaco", "magnete", "manga", "manequim", "manopla", "mapa", "marcador", "mascara", "medalha", "microscopio", "mictorio", "moedor", "mola", "morango", "mochila", "munhequeira", "navalha", "niple", "novelo", "ombreira", "pandeiro", "parafuso", "pen drive", "pinça", "pirulito", "prancha", "puxador", "quadro-negro", "radiola", "regador", "rolamento", "serrote", "skate", "sobretudo", "sorvete", "tampa", "termometro", "torneira", "trampolim", "tribuna", "tricô", "trofeu", "turbina", "urna", "vagalume", "vareta", "veado", "ventilador", "vitrine", "xale", "zircão", "zurro", "abotoadura", "acordeon", "aerofolio", "agave", "alambique", "alfinete", "algema", "amuleto", "ancora", "anel", "aparador", "apoio", "aquecedor", "armario", "arroba", "autorama", "avental", "bacia", "bafometro", "baguete", "balaustre", "balde", "bandeja", "barril", "batedeira", "bico", "binoculo", "biruta", "bisturi", "bloco", "boia", "bolacha", "bombom", "bumerangue", "cabana", "cabideiro", "cachimbo", "caco", "cajado", "caldeirao", "camisa", "caneca", "canudo", "capa", "carrossel", "cartaz", "cinto", "cisterna", "clarinete", "carrinho", "coifa", "coroa", "cuba", "dossel", "draga", "escafandro", "espeto", "esquadro", "estandarte", "estojo", "fanzine", "ferrolho", "figa", "flanela", "formao", "frasco", "freio", "frescura", "funil", "gabarito", "gaita", "gangorra", "grampo", "guilhotina", "hidrante", "isqueiro", "jerico", "jiboia", "jornaleiro", "juba", "kilt", "lacre", "ladrao", "lampiao", "lata", "lixeira", "luva", "machado", "madeira", "maleta", "manometro", "marionete", "marreta", "mascara", "mastruz", "medalhao", "medidor", "mictorio", "moringa", "motoneta", "mural", "nafta", "narguile", "neve", "nylon", "obelisco", "oboe", "oito", "oleo", "orca", "ornamento", "palheta", "panfleto", "parachoque", "parafuso", "parafuso", "patins", "pendulo", "periscopio", "petroleo", "picareta", "pilão", "pilastra", "pinça", "pingente", "pipoqueira", "piramide", "plataforma", "pluma", "portao", "prego", "propulsor", "pulverizador", "quadrante", "quebra-cabeça", "quilha", "rabeca", "radar", "ralador", "rastelo", "regua", "relogio", "rotor", "safira", "salsicha", "sanduiche", "serafim", "sino", "sinuca", "solda", "solenoide", "sutura", "tabuleta", "talher", "telescopio", "telefone", "torre", "torpedo", "trava", "treliche", "trombone", "trofeu", "turbina", "urna", "vagonete", "vela", "vidro", "viola", "visor", "volta", "xilofone", "yoga", "zepelim", "zinco", "zircão"
-];
+
+// NOTA: 'translations' e 'wordLists' são carregados globalmente a partir de 'translations.js'
+
+let currentLang = localStorage.getItem('language') || 'pt-br';
+// Acessa os objetos globais definidos em translations.js
+let t = translations[currentLang]; // Variável de tradução ativa
+let activeWordList = wordLists[currentLang]; // Lista de palavras ativa
 
 let generatedPasswords = [];
 const MAX_HISTORY = 10;
@@ -64,8 +68,11 @@ const historyList = document.getElementById('password-history-list');
 const clearHistoryButton = document.getElementById('clear-history-button');
 const historyStatus = document.getElementById('history-status');
 
+// NOVO: Seletor de Idioma
+const languageSelect = document.getElementById('language-select');
 
-// --- 4. FUNÇÕES DE UTILIDADE E SEGURANÇA (Mantidas as originais) ---
+
+// --- 4. FUNÇÕES DE UTILIDADE E SEGURANÇA ---
 
 /**
  * Retorna um índice seguro e aleatório (crypto.getRandomValues).
@@ -102,7 +109,7 @@ function secureShuffle(input) {
 }
 
 
-// --- 5. LÓGICA DE FORÇA DA SENHA (Mantida a original) ---
+// --- 5. LÓGICA DE FORÇA DA SENHA ---
 
 function capitalizeFirstLetter(word) {
     return word.charAt(0).toUpperCase() + word.slice(1);
@@ -114,8 +121,9 @@ function calculateStrength(password, mode, charSetSize, passphraseArray = null) 
     if (mode === 'char') {
         entropy = password.length * Math.log2(charSetSize);
     } else if (mode === 'passphrase') {
-        const numWords = passphraseArray.filter(item => wordList.includes(item.toLowerCase())).length;
-        entropy = numWords * Math.log2(wordList.length); 
+        // Usa a lista ativa para o cálculo de entropia
+        const numWords = passphraseArray.filter(item => activeWordList.includes(item.toLowerCase())).length;
+        entropy = numWords * Math.log2(activeWordList.length); 
         if (capitalizeWords.checked) {
             entropy += numWords * 1; 
         }
@@ -138,24 +146,24 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
 
     if (entropy === 0) {
         strengthBar.style.width = "0%";
-        strengthText.textContent = "";
+        strengthText.textContent = t.strengthNone; 
         return;
     }
 
     if (entropy < 40) {
-        strength = "Fraca";
+        strength = t.strengthWeak; 
         width = (entropy / 40) * 25; 
         className = "strength-weak";
     } else if (entropy < 60) {
-        strength = "Média";
+        strength = t.strengthMedium; 
         width = 25 + ((entropy - 40) / 20) * 25; 
         className = "strength-medium";
     } else if (entropy < 80) {
-        strength = "Forte";
+        strength = t.strengthStrong; 
         width = 50 + ((entropy - 60) / 20) * 25; 
         className = "strength-strong";
     } else {
-        strength = "Muito Forte";
+        strength = t.strengthVeryStrong; 
         width = 75 + Math.min(25, (entropy - 80) / 20); 
         className = "strength-very-strong";
     }
@@ -166,7 +174,7 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
 }
 
 
-// --- 6. LÓGICA DE GERAÇÃO (Mantida a original) ---
+// --- 6. LÓGICA DE GERAÇÃO ---
 
 function removeAmbiguous(charSet) {
     const regex = new RegExp('[' + charSets.ambiguous.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ']', 'g');
@@ -192,7 +200,7 @@ function generateCharacterPassword() {
     
     // 2. VALIDAÇÃO
     if (allChars.length === 0) {
-        passwordDisplay.value = "**Selecione Pelo Menos um Tipo de Caractere!**";
+        passwordDisplay.value = t.errorSelectChar; 
         updateStrengthIndicator("", 'char', 0);
         return;
     }
@@ -235,14 +243,14 @@ function generatePassphrase() {
     let passphraseArray = [];
 
     if (numWords < 3 || numWords > 10) { 
-        passwordDisplay.value = "Número de palavras inválido (3-10).";
+        passwordDisplay.value = t.errorInvalidWords; 
         updateStrengthIndicator("", 'passphrase', 0);
         return;
     }
 
-    // 1. Gera as palavras
+    // 1. Gera as palavras usando a lista ativa
     for (let i = 0; i < numWords; i++) {
-        let word = wordList[getRandomSecureIndex(wordList.length)];
+        let word = activeWordList[getRandomSecureIndex(activeWordList.length)];
         if (doCapitalize) {
             word = capitalizeFirstLetter(word);
         }
@@ -263,13 +271,15 @@ function generatePassphrase() {
     const finalPassphrase = passphraseArray.join(separator);
     
     passwordDisplay.value = finalPassphrase;
-    updateStrengthIndicator(finalPassphrase, 'passphrase', wordList.length, passphraseArray); 
+    updateStrengthIndicator(finalPassphrase, 'passphrase', activeWordList.length, passphraseArray);
     saveToHistory(finalPassphrase);
 }
 
 function generatePassword() {
-    copyButton.textContent = 'Copiar';
+    copyButton.textContent = t.copy; 
     copyButton.classList.remove('copied');
+    // Limpa a exibição antes de gerar
+    passwordDisplay.value = t.defaultMessage; 
 
     if (modePassphrase.checked) {
         generatePassphrase();
@@ -279,7 +289,7 @@ function generatePassword() {
 }
 
 
-// --- 7. LÓGICA DE SINCRONIZAÇÃO (Mantida a original) ---
+// --- 7. LÓGICA DE SINCRONIZAÇÃO ---
 
 function syncLengthInputs(source) {
     const value = source.value;
@@ -292,7 +302,6 @@ function syncLengthInputs(source) {
     } else {
         lengthRangeInput.value = safeValue;
     }
-    generatePassword(); 
 }
 
 function syncNumWordsInputs(source) {
@@ -306,14 +315,31 @@ function syncNumWordsInputs(source) {
     } else {
         numWordsRangeInput.value = safeValue;
     }
+}
+
+/**
+ * Alterna entre os modos de exibição de configurações (Character vs. Passphrase).
+ */
+function switchMode() {
+    const isPassphraseMode = modePassphrase.checked;
+    
+    charSettingsDiv.style.display = isPassphraseMode ? 'none' : 'block';
+    passphraseSettingsDiv.style.display = isPassphraseMode ? 'block' : 'none';
+    
+    // Atualiza o texto do botão de geração (AGORA TRADUZIDO)
+    generateButton.textContent = isPassphraseMode ? t.generatePassphrase : t.generate;
+    
+    currentMode = isPassphraseMode ? 'passphrase' : 'char';
+    
+    // Tenta gerar automaticamente ao mudar de modo
     generatePassword();
 }
 
 
-// --- 8. HISTÓRICO, COPIAR E TOAST (Mantida a original) ---
+// --- 8. HISTÓRICO, COPIAR E TOAST ---
 
 function saveToHistory(password) {
-    if (!password || password.includes("Selecione") || password.includes("inválido")) return;
+    if (!password || password.includes('**')) return; 
     let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
     if (history.length === 0 || history[history.length - 1] !== password) {
         history.push(password);
@@ -328,7 +354,10 @@ function saveToHistory(password) {
 function renderHistory() {
     let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
     historyList.innerHTML = ''; 
+    
+    // Se não há histórico, mostra a mensagem de status traduzida
     if (history.length === 0) {
+        historyStatus.textContent = t.historyStatus; 
         historyStatus.style.display = 'block';
         return;
     }
@@ -339,7 +368,7 @@ function renderHistory() {
         item.classList.add('history-item');
         item.innerHTML = `
             <span class="history-password">${pwd}</span>
-            <button class="history-copy-btn" data-password="${pwd}">Copiar</button>
+            <button class="history-copy-btn" data-password="${pwd}">${t.copy}</button>
         `;
         historyList.appendChild(item);
     });
@@ -348,8 +377,8 @@ function renderHistory() {
         btn.addEventListener('click', (e) => {
             const pwdToCopy = e.target.getAttribute('data-password');
             navigator.clipboard.writeText(pwdToCopy);
-            e.target.textContent = "✅ Copiado!";
-            setTimeout(() => { e.target.textContent = "Copiar"; }, 1500);
+            e.target.textContent = t.copySuccess; 
+            setTimeout(() => { e.target.textContent = t.copy; }, 1500);
         });
     });
 }
@@ -357,7 +386,7 @@ function renderHistory() {
 function clearHistory() {
     sessionStorage.removeItem('passwordHistory');
     renderHistory(); 
-    showToast("Histórico limpo!");
+    showToast(t.toastHistoryCleared); 
 }
 
 function showToast(message) {
@@ -380,107 +409,151 @@ function showToast(message) {
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        copyButton.textContent = '✅ Copiado!';
+        copyButton.textContent = t.copySuccess; 
         copyButton.classList.add('copied');
-        showToast("Senha copiada para a área de transferência!");
+        showToast(t.toastCopied); 
         setTimeout(() => {
-            copyButton.textContent = 'Copiar';
+            copyButton.textContent = t.copy; 
             copyButton.classList.remove('copied');
         }, 1500);
     });
 }
 
 
-// --- 9. LÓGICA DE TEMA CORRIGIDA E SIMPLIFICADA 🌙☀️ ---
+// --- 9. LÓGICA DE TEMA SIMPLIFICADA 🌙☀️ ---
 
-/**
- * Aplica o tema (light ou dark) ao body e salva no localStorage.
- * @param {string} theme - 'dark' ou 'light'.
- */
 function setTheme(theme) {
-    if (theme === 'dark') {
-        document.body.classList.add('dark-mode');
-        localStorage.setItem('theme', 'dark');
-    } else {
-        document.body.classList.remove('dark-mode');
-        localStorage.setItem('theme', 'light');
-    }
+    document.body.classList.toggle('dark-mode', theme === 'dark');
+    localStorage.setItem('theme', theme);
 }
 
-/**
- * Alterna entre o modo escuro e claro.
- */
 function toggleTheme() {
     const isDark = document.body.classList.contains('dark-mode');
-    setTheme(isDark ? 'light' : 'dark'); // Inverte o tema atual
+    setTheme(isDark ? 'light' : 'dark'); 
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme') || 
+                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(savedTheme);
+}
+
+
+// --- 10. LÓGICA DE INTERNACIONALIZAÇÃO (i18n) ---
+
+/**
+ * Aplica as traduções baseadas no idioma ativo.
+ */
+function applyTranslations(lang) {
+    // Acessa os objetos globais (definidos em translations.js)
+    if (!translations[lang]) {
+        console.error(`Traduções para o idioma ${lang} não encontradas.`);
+        return;
+    }
+
+    // 1. Atualiza a variável de tradução ativa 't' e as listas
+    t = translations[lang];
+    currentLang = lang;
+    activeWordList = wordLists[lang];
+    
+    // 2. Itera sobre todos os elementos com data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        let text = t[key] || el.textContent;
+
+        // Suporta formatação de texto (ex: **negrito**)
+        if (text.includes('**')) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            el.innerHTML = text;
+        } else if (el.tagName === 'INPUT' && el.type === 'text') {
+            el.setAttribute('placeholder', text);
+            if (key === 'displayDefault' && el.value === "") {
+                el.value = text;
+            }
+        } else {
+            el.textContent = text;
+        }
+    });
+
+    // 3. Casos Especiais Manuais
+    document.title = t.title;
+    
+    // 4. Garante que o texto do botão de Gerar e Força seja atualizado
+    switchMode(); 
+    updateStrengthIndicator(passwordDisplay.value, currentMode, 0);
+
+    // 5. Atualiza o status do histórico
+    renderHistory();
 }
 
 /**
- * Carrega o tema salvo no localStorage ao iniciar a página.
+ * Função para trocar o idioma e persistir a escolha.
  */
-function loadTheme() {
-    const savedTheme = localStorage.getItem('theme');
-    // Se o usuário já escolheu 'dark', aplica. Caso contrário, usa o padrão (light).
-    if (savedTheme === 'dark') {
-        setTheme('dark');
-    } else {
-        setTheme('light');
-    }
+function switchLanguage(newLang) {
+    localStorage.setItem('language', newLang);
+    currentLang = newLang;
+    applyTranslations(newLang);
 }
 
-
-// --- 10. LISTENERS DE EVENTOS ---
-
-// Sincronização de Inputs
-lengthRangeInput.addEventListener('input', () => syncLengthInputs(lengthRangeInput));
-lengthNumberInput.addEventListener('input', () => syncLengthInputs(lengthNumberInput));
-numWordsRangeInput.addEventListener('input', () => syncNumWordsInputs(numWordsRangeInput));
-numWordsNumberInput.addEventListener('input', () => syncNumWordsInputs(numWordsNumberInput));
-
-// Listener para alternar modos
-const handleModeChange = () => {
-    currentMode = modeChar.checked ? 'char' : 'passphrase';
-    charSettingsDiv.style.display = currentMode === 'char' ? 'block' : 'none';
-    passphraseSettingsDiv.style.display = currentMode === 'passphrase' ? 'block' : 'none';
-    generateButton.textContent = currentMode === 'char' ? 'Gerar Senha' : 'Gerar Passphrase';
-    generatePassword();
-};
-modeChar.addEventListener('change', handleModeChange);
-modePassphrase.addEventListener('change', handleModeChange);
-
-
-// Listeners que regeneram a senha em tempo real
-[includeUppercase, includeLowercase, includeNumbers, includeSymbols, 
- includeAccentedChars, excludeAmbiguous, separatorInput, capitalizeWords, 
- includePassphraseDigits].forEach(element => {
-    element.addEventListener(element.type === 'text' ? 'input' : 'change', generatePassword);
-});
-
-
-// Outros Listeners
-generateButton.addEventListener('click', generatePassword);
-copyButton.addEventListener('click', () => copyToClipboard(passwordDisplay.value));
-clearHistoryButton.addEventListener('click', clearHistory);
-themeToggle.addEventListener('click', toggleTheme); // Usa a função corrigida
-
-
-// --- 11. INICIALIZAÇÃO ---
+// --- 11. INICIALIZAÇÃO E OUVINTES DE EVENTOS (Listeners) ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Carrega o tema (CORRIGIDO)
+    // 1. Carrega o tema e o idioma (ordem é importante!)
     loadTheme();
     
-    // 2. Inicializa os valores e gera a primeira senha
-    syncLengthInputs(lengthRangeInput);
-    syncNumWordsInputs(numWordsRangeInput);
-    handleModeChange(); 
+    // Sincroniza o seletor de idioma com o idioma salvo (ou padrão 'pt-br')
+    languageSelect.value = currentLang; 
+    applyTranslations(currentLang); // Aplica as traduções no carregamento
     
-    // 3. UX: Mensagem padrão
-    if (passwordDisplay.value.includes("Selecione") || passwordDisplay.value.includes("inválido")) {
-        passwordDisplay.value = "Clique em Gerar ou Ajuste as Opções"; 
-        updateStrengthIndicator("", currentMode, 0); 
-    }
+    // 2. OUVINTES DE EVENTOS
+    
+    // Modo (Caracteres/Passphrase)
+    modeChar.addEventListener('change', switchMode);
+    modePassphrase.addEventListener('change', switchMode);
 
-    // 4. Renderiza histórico
-    renderHistory();
+    // Comprimento/Número de Palavras
+    lengthRangeInput.addEventListener('input', () => syncLengthInputs(lengthRangeInput));
+    lengthNumberInput.addEventListener('input', () => syncLengthInputs(lengthNumberInput));
+    numWordsRangeInput.addEventListener('input', () => syncNumWordsInputs(numWordsRangeInput));
+    numWordsNumberInput.addEventListener('input', () => syncNumWordsInputs(numWordsNumberInput));
+
+    // Ações ao Gerar e Copiar (incluindo mudanças nas opções de geração)
+    const generationInputs = [
+        generateButton, includeUppercase, includeLowercase, includeNumbers, 
+        includeSymbols, includeAccentedChars, excludeAmbiguous, separatorInput, 
+        capitalizeWords, includePassphraseDigits, lengthRangeInput, numWordsRangeInput
+    ];
+    // Adiciona listener para alterações que exigem nova geração/cálculo
+    generationInputs.forEach(input => {
+        input.addEventListener('change', generatePassword); 
+        input.addEventListener('input', () => { 
+            // Para sliders, atualiza a força sem gerar nova senha a cada movimento
+            updateStrengthIndicator(passwordDisplay.value, currentMode, 0); 
+        });
+    });
+    generateButton.addEventListener('click', generatePassword);
+    
+    // Copiar
+    copyButton.addEventListener('click', () => {
+        const password = passwordDisplay.value;
+        if (password && password !== t.defaultMessage && !password.includes('**')) {
+            copyToClipboard(password);
+        } else {
+            showToast(t.defaultMessage); 
+        }
+    });
+
+    // Tema
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // Histórico
+    clearHistoryButton.addEventListener('click', clearHistory);
+
+    // NOVO: Seletor de Idioma
+    languageSelect.addEventListener('change', (e) => {
+        switchLanguage(e.target.value);
+    });
+
+    // Finalmente, gera uma senha inicial ao carregar
+    generatePassword();
 });

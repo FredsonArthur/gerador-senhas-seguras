@@ -1,4 +1,4 @@
-/* --- style.css - VERSÃO SIMPLIFICADA E OTIMIZADA --- */
+/* --- style.css - VERSÃO FINAL E COMPLETA --- */
 
 /* ========================================================================= */
 /* --- 1. DEFINIÇÃO DE VARIÁVEIS E TEMA --- */
@@ -54,7 +54,7 @@ body.dark-mode {
     --toast-bg: #3a3a3a;
 }
 
-/* Cores fixas da barra de força (mantidas) */
+/* Cores fixas da barra de força */
 .strength-weak { background-color: #dc3545; }
 .strength-medium { background-color: #ffc107; }
 .strength-strong { background-color: var(--primary-color); } 
@@ -74,6 +74,7 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    padding: 20px; /* Padding para telas pequenas */
     transition: background-color 0.4s, color 0.4s;
 }
 
@@ -82,10 +83,18 @@ body {
     padding: 30px;
     border-radius: 12px;
     box-shadow: var(--shadow);
-    width: 90%;
+    width: 100%;
     max-width: 450px;
     position: relative; 
     transition: background-color 0.4s, box-shadow 0.4s;
+}
+
+/* Estilo para agrupar o seletor de idioma e o botão de tema */
+.header-controls {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 h1 {
@@ -129,12 +138,12 @@ h1 {
 /* ========================================================================= */
 
 /* Estilo Base para Todos os Botões Primários */
-#generate-button, #copy-button, .history-copy-btn {
+#generate-button, #copy-button, .history-copy-btn, #clear-history-button {
     border: none;
     cursor: pointer;
     font-weight: bold;
-    color: var(--button-text);
     transition: background-color 0.3s, transform 0.1s;
+    text-decoration: none;
 }
 
 /* Botão Principal */
@@ -142,19 +151,25 @@ h1 {
     width: 100%;
     padding: 15px;
     background-color: var(--primary-color);
+    color: var(--button-text);
     border-radius: 5px;
     font-size: 1.2em;
+    margin-top: 15px;
 }
 #generate-button:hover { background-color: var(--primary-hover); }
 
-/* Botões Pequenos (Copiar e Histórico) */
+/* Botões Pequenos (Copiar) */
 #copy-button, .history-copy-btn {
     padding: 10px 15px;
     background-color: var(--copy-color);
+    color: var(--button-text);
+    font-size: 1em;
 }
 #copy-button:hover, .history-copy-btn:hover { background-color: var(--copy-hover); }
 
-#copy-button:active, #generate-button:active { transform: scale(0.98); }
+#copy-button:active, #generate-button:active, .history-copy-btn:active { 
+    transform: scale(0.98); 
+}
 
 /* Estilo para o estado "Copiado" */
 #copy-button.copied {
@@ -162,15 +177,29 @@ h1 {
 }
 
 /* Inputs de Texto/Número/Display */
-#password-display, #length-number, #num-words-number, .setting-item input[type="text"]#separator, .history-item {
+#password-display, #length-number, #num-words-number, .setting-item input[type="text"]#separator {
     border: 1px solid var(--input-border);
     background-color: var(--input-bg);
     color: var(--text-color);
     border-radius: 4px;
     transition: border-color 0.3s, background-color 0.3s;
+    box-sizing: border-box; /* Inclui padding e borda na largura/altura */
 }
 
-/* Oculta setas (spin buttons) para number inputs - Agrupado */
+/* Estilo para o Seletor de Idioma */
+#language-select {
+    padding: 6px 10px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    appearance: none; 
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Oculta setas (spin buttons) para number inputs */
 #length-number::-webkit-inner-spin-button, #length-number::-webkit-outer-spin-button,
 #num-words-number::-webkit-inner-spin-button, #num-words-number::-webkit-outer-spin-button { 
     -webkit-appearance: none; margin: 0; 
@@ -188,7 +217,7 @@ h1 {
 
 #password-display {
     flex-grow: 1;
-    padding: 10px;
+    padding: 12px;
     font-size: 1.1em;
     border-radius: 5px 0 0 5px;
     word-break: break-all; 
@@ -213,6 +242,10 @@ h1 {
     width: 50%; 
 }
 
+.setting-item > label {
+    font-weight: 500;
+}
+
 /* Range Input (a trilha) */
 #length-range, #num-words-range {
     flex-grow: 1;
@@ -226,10 +259,10 @@ h1 {
     transition: background 0.3s;
 }
 
-/* Thumb (a bolinha) - Agrupado Webkit/Moz */
+/* Thumb (a bolinha) */
 #length-range::-webkit-slider-thumb, #num-words-range::-webkit-slider-thumb,
 #length-range::-moz-range-thumb, #num-words-range::-moz-range-thumb {
-    -webkit-appearance: none; /* Webkit */
+    -webkit-appearance: none; 
     appearance: none;
     width: 18px;
     height: 18px;
@@ -301,6 +334,7 @@ h1 {
     color: var(--secondary-text);
     border: 2px solid var(--input-border);
     transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    text-align: center;
 }
 
 .mode-selector label:hover {
@@ -349,9 +383,6 @@ h1 {
 /* ========================================================================= */
 
 #theme-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
     background: none;
     border: none;
     font-size: 1.5em;
@@ -367,11 +398,7 @@ h1 {
     background-color: var(--settings-bg);
 }
 
-/* Gerenciamento de Ícones do Tema */
-#theme-toggle .icon-light { display: none; } /* Padrão: mostra a lua (icon-dark) */
-body.dark-mode #theme-toggle .icon-light { display: inline; } /* Dark: mostra o sol (icon-light) */
-body.dark-mode #theme-toggle .icon-dark { display: none; }
-
+/* Nota: O JS gerencia o conteúdo de 🌙/☀️ */
 
 /* Toast Notification */
 #toast-container {
@@ -406,12 +433,16 @@ body.dark-mode #theme-toggle .icon-dark { display: none; }
     border: 1px dashed var(--input-border); 
 }
 
-.history-container h3 {
+.history-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0;
     margin-bottom: 10px;
+}
+
+.history-container h3 {
+    margin-top: 0;
+    margin-bottom: 0; 
     color: var(--text-color);
     font-size: 1.2em;
 }
@@ -432,11 +463,11 @@ body.dark-mode #theme-toggle .icon-dark { display: none; }
 
 .password-history-list {
     display: flex;
-    flex-direction: column-reverse; 
+    flex-direction: column-reverse; /* Inverte a ordem para mostrar o mais recente no topo */
     gap: 10px;
     max-height: 200px;
     overflow-y: auto;
-    padding-right: 5px; 
+    padding: 5px; 
 }
 
 /* Otimização de Scrollbar para Histórico */
@@ -452,6 +483,8 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
     justify-content: space-between;
     align-items: center;
     padding: 8px;
+    background-color: var(--input-bg);
+    border-radius: 4px;
 }
 
 .history-password {
@@ -471,6 +504,7 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
     padding: 5px 10px;
     border-radius: 3px;
     font-size: 0.8em;
+    flex-shrink: 0; /* Impede que o botão encolha */
 }
 
 .history-status {
@@ -485,27 +519,71 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
     background-color: var(--input-bg);
 }
 
+.history-note {
+    font-size: 0.8em;
+    color: var(--secondary-text);
+    text-align: center;
+    margin-top: 15px;
+}
+
 
 /* ========================================================================= */
 /* --- 10. RESPONSIVIDADE BÁSICA --- */
 /* ========================================================================= */
 
 @media (max-width: 500px) {
+    body { padding: 10px; }
     .container { padding: 20px; }
+    
+    /* Centraliza o cabeçalho (i18n + Tema) e o Título em telas pequenas */
+    .header-controls {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+    
+    h1 { margin-bottom: 10px; font-size: 1.6em; } 
+    
+    /* Layout Vertical para Área de Saída */
     .output-area { flex-direction: column; }
     #password-display { border-radius: 5px; margin-bottom: 10px; }
     #copy-button { border-radius: 5px; width: 100%; padding: 12px 15px; }
     
-    /* Ajuste responsivo principal para o slider-group */
+    /* Ajuste responsivo para configurações (sliders/checkboxes) */
     .setting-item {
         flex-direction: column; 
         align-items: flex-start; 
+        margin-bottom: 15px;
     }
     .slider-group {
         width: 100%; 
         margin-top: 5px;
     }
+    .setting-item label {
+        margin-bottom: 5px;
+    }
+    .setting-item input[type="checkbox"] {
+        margin-top: 5px;
+        margin-left: 0;
+    }
     .setting-item input[type="text"]#separator {
         margin-top: 5px;
+    }
+    
+    /* Ajuste de tamanho para modo-selector */
+    .mode-selector { gap: 5px; }
+    .mode-selector label { font-size: 0.9em; padding: 8px 10px; }
+    
+    /* Ajuste de Toast para telas pequenas */
+    #toast-container {
+        bottom: 10px;
+        right: 10px;
+        left: 10px; /* Estica em toda a largura */
+    }
+    .toast {
+        width: auto;
+        margin-bottom: 5px;
+        text-align: center;
     }
 }

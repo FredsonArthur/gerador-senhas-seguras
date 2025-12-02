@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Senhas e Passphrases Seguras | Ferramenta Online</title>
+    <title data-i18n="title">Gerador de Senhas Seguras | Ferramenta Online</title> 
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,41 +11,49 @@
 
     <div class="container" role="main" aria-label="Gerador de Senhas Seguras">
         
-        <button id="theme-toggle" title="Alternar entre Tema Claro e Escuro" aria-live="polite">
-            <span class="icon-light">☀️</span>
-            <span class="icon-dark">🌙</span>
-        </button>
+        <div class="header-controls">
+            <div class="language-selector">
+                <select id="language-select" aria-label="Seletor de Idioma">
+                    <option value="pt-br">🇧🇷 Português</option> 
+                    <option value="en-us">🇺🇸 English</option>
+                </select>
+            </div>
+            
+            <button id="theme-toggle" title="Alternar entre Tema Claro e Escuro" aria-live="polite">
+                <span>🌙/☀️</span> 
+            </button>
+        </div>
 
-        <h1>🔐 Gerador de Senhas Seguras</h1>
+        <h1 data-i18n="title">🔐 Gerador de Senhas Seguras</h1>
 
         <div class="mode-selector" role="radiogroup" aria-label="Seletor de Modo de Geração de Senha">
             <input type="radio" id="mode-char" name="gen-mode" value="char" checked>
-            <label for="mode-char">Senha por **Caracteres**</label>
+            <label for="mode-char" data-i18n="modeChar"></label>
 
             <input type="radio" id="mode-passphrase" name="gen-mode" value="passphrase">
-            <label for="mode-passphrase">**Passphrase** (Frase-Senha)</label>
+            <label for="mode-passphrase" data-i18n="modePassphrase"></label>
         </div>
         
         <div class="output-area">
-            <input type="text" id="password-display" readonly value="Gere sua senha aqui" aria-live="assertive">
-            <button id="copy-button" title="Copiar a senha exibida para a área de transferência">Copiar</button>
+            <input type="text" id="password-display" readonly value="" placeholder="" data-i18n="displayDefault" aria-live="assertive">
+            <button id="copy-button" title="Copiar a senha exibida para a área de transferência" data-i18n="copy"></button>
         </div>
         
         <div class="strength-indicator-container">
-            <p class="strength-label">Força da Senha:</p>
+            <p class="strength-label" data-i18n="strengthLabel"></p>
             <div class="strength-indicator" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Indicador de Força da Senha">
                 <div id="strength-bar" class="strength-bar"></div>
             </div>
-            <div id="strength-text" class="strength-text">Nenhuma senha</div>
+            <div id="strength-text" class="strength-text"></div>
         </div>
         
         <div class="settings">
             
             <div id="char-settings">
-                <h2>⚙️ Configurações de Caracteres</h2>
+                <h2 data-i18n="configCharTitle"></h2>
 
                 <div class="setting-item">
-                    <label for="length-number">Comprimento da Senha:</label>
+                    <label for="length-number" data-i18n="lengthLabel"></label>
                     <div class="slider-group">
                         <input type="range" id="length-range" min="6" max="64" value="12" aria-labelledby="length-number">
                         <input type="number" id="length-number" min="6" max="64" value="12" aria-label="Comprimento da Senha em número">
@@ -56,40 +64,35 @@
 
                 <div class="setting-item">
                     <input type="checkbox" id="include-uppercase" checked>
-                    <label for="include-uppercase">Incluir Maiúsculas (A-Z)</label>
+                    <label for="include-uppercase" data-i18n="includeUppercase"></label>
                 </div>
-
                 <div class="setting-item">
                     <input type="checkbox" id="include-lowercase" checked>
-                    <label for="include-lowercase">Incluir Minúsculas (a-z)</label>
+                    <label for="include-lowercase" data-i18n="includeLowercase"></label>
                 </div>
-
                 <div class="setting-item">
                     <input type="checkbox" id="include-numbers" checked>
-                    <label for="include-numbers">Incluir Números (0-9)</label>
+                    <label for="include-numbers" data-i18n="includeNumbers"></label>
                 </div>
-
                 <div class="setting-item">
                     <input type="checkbox" id="include-symbols">
-                    <label for="include-symbols">Incluir Símbolos (!@#$...)</label>
+                    <label for="include-symbols" data-i18n="includeSymbols"></label>
                 </div>
-
                 <div class="setting-item">
                     <input type="checkbox" id="include-accented-chars">
-                    <label for="include-accented-chars">Incluir Acentuados (áàãéè...)</label>
+                    <label for="include-accented-chars" data-i18n="includeAccentedChars"></label>
                 </div>
-                
                 <div class="setting-item">
                     <input type="checkbox" id="exclude-ambiguous">
-                    <label for="exclude-ambiguous" title="Remove caracteres que se parecem, como 'i', 'l', '1', 'o', '0'">Excluir Ambíguos (i, l, 1, 0, o)</label>
+                    <label for="exclude-ambiguous" data-i18n="excludeAmbiguous"></label>
                 </div>
             </div>
 
             <div id="passphrase-settings" style="display: none;">
-                <h2>📝 Configurações de Passphrase</h2>
+                <h2 data-i18n="configPassphraseTitle"></h2>
 
                 <div class="setting-item">
-                    <label for="num-words-number">Número de Palavras (3-10):</label>
+                    <label for="num-words-number" data-i18n="numWords"></label>
                     <div class="slider-group">
                         <input type="range" id="num-words-range" min="3" max="10" value="4" aria-labelledby="num-words-number">
                         <input type="number" id="num-words-number" min="3" max="10" value="4" aria-label="Número de palavras da Passphrase em número">
@@ -99,40 +102,42 @@
                 <hr>
                 
                 <div class="setting-item">
-                    <label for="separator">Separador:</label>
-                    <input type="text" id="separator" maxlength="1" value="-" placeholder="-" aria-label="Caractere separador entre as palavras">
+                    <label for="separator" data-i18n="separator"></label>
+                    <input type="text" id="separator" maxlength="1" value="-" aria-label="Caractere separador entre as palavras">
                 </div>
                 
                 <div class="setting-item">
                     <input type="checkbox" id="capitalize-words" aria-label="Capitalizar a primeira letra de cada palavra">
-                    <label for="capitalize-words">Capitalizar Palavras</label>
+                    <label for="capitalize-words" data-i18n="capitalizeWords"></label>
                 </div>
 
                 <div class="setting-item">
                     <input type="checkbox" id="include-passphrase-digits" checked aria-label="Incluir 1 ou mais dígitos aleatórios na Passphrase">
-                    <label for="include-passphrase-digits">Incluir Dígitos Aleatórios</label>
+                    <label for="include-passphrase-digits" data-i18n="includePassphraseDigits"></label>
                 </div>
                 
             </div>
         </div>
         
-        <button id="generate-button" aria-controls="password-display" class="generate-button-main">**Gerar Senha**</button>
+        <button id="generate-button" aria-controls="password-display" class="generate-button-main"></button>
 
         <div class="history-container">
             <div class="history-header">
-                <h3>📜 Histórico da Sessão</h3>
-                <button id="clear-history-button" title="Limpar todas as senhas armazenadas nesta aba." aria-controls="password-history-list">Limpar</button>
+                <h3 data-i18n="historyTitle"></h3>
+                <button id="clear-history-button" title="Limpar todas as senhas armazenadas nesta aba." aria-controls="password-history-list" data-i18n="historyClear"></button>
             </div>
             
-            <p id="history-status" class="history-status" role="status">O histórico está vazio ou foi limpo.</p>
+            <p id="history-status" class="history-status" role="status"></p>
             <div id="password-history-list" class="password-history-list" role="log" aria-live="polite">
-            </div>
-            <p class="history-note">⚠️ **Nota:** As senhas são apagadas ao fechar a aba/navegador (sessão).</p>
+                </div>
+            <p class="history-note" data-i18n="historyNote"></p>
         </div>
         
     </div>
 
     <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+    
+    <script src="translations.js"></script> 
     
     <script src="script.js"></script>
 </body>
