@@ -1,4 +1,4 @@
-/* --- script.js - VERSÃO COM VALIDAÇÃO E SINCRONIZAÇÃO REINTEGRADA --- */
+/* --- script.js - CÓDIGO FINAL COM TEMA CORRIGIDO E SINCRONIZAÇÃO TOTAL --- */
 
 // --- 1. CONFIGURAÇÕES E VARIÁVEIS GLOBAIS ---
 const wordList = [
@@ -20,14 +20,14 @@ const charSets = {
 };
 
 
-// --- 3. REFERÊNCIAS AO DOM (REAJUSTADAS PARA SINCRONIZAÇÃO DE INPUTS) ---
+// --- 3. REFERÊNCIAS AO DOM ---
 
 // Elementos de Entrada/Saída
 const passwordDisplay = document.getElementById('password-display');
 const generateButton = document.getElementById('generate-button');
 const copyButton = document.getElementById('copy-button');
 
-// Range Sliders (IDs Corretos para sincronização)
+// Range Sliders
 const lengthRangeInput = document.getElementById('length-range'); 
 const lengthNumberInput = document.getElementById('length-number');
 const numWordsRangeInput = document.getElementById('num-words-range');
@@ -49,6 +49,8 @@ const passphraseSettingsDiv = document.getElementById('passphrase-settings');
 
 // Configurações de Passphrase
 const separatorInput = document.getElementById('separator');
+const capitalizeWords = document.getElementById('capitalize-words');
+const includePassphraseDigits = document.getElementById('include-passphrase-digits');
 
 // Indicador de Força
 const strengthBar = document.getElementById('strength-bar');
@@ -63,13 +65,10 @@ const clearHistoryButton = document.getElementById('clear-history-button');
 const historyStatus = document.getElementById('history-status');
 
 
-// --- 4. FUNÇÕES DE UTILIDADE E SEGURANÇA (MELHORIA 3 MANTIDA) ---
+// --- 4. FUNÇÕES DE UTILIDADE E SEGURANÇA (Mantidas as originais) ---
 
 /**
- * Retorna um índice seguro e aleatório dentro do limite especificado.
- * Usa crypto.getRandomValues para segurança criptográfica.
- * @param {number} max - O limite máximo (comprimento da string ou array).
- * @returns {number} Um índice inteiro e seguro.
+ * Retorna um índice seguro e aleatório (crypto.getRandomValues).
  */
 function getRandomSecureIndex(max) {
     const randomArray = new Uint32Array(1); 
@@ -86,52 +85,53 @@ function getRandomSecureIndex(max) {
 }
 
 /**
- * Embaralha uma string (ou array) de forma criptograficamente segura usando o algoritmo Fisher-Yates.
- * @param {string} string - A string a ser embaralhada.
- * @returns {string} A string embaralhada.
+ * Embaralha uma string/array de forma criptograficamente segura (Fisher-Yates).
  */
-function secureShuffle(string) {
-    let array = string.split('');
+function secureShuffle(input) {
+    let array = Array.isArray(input) ? input : input.split('');
     let currentIndex = array.length, temporaryValue, randomIndex;
 
     while (0 !== currentIndex) {
-        // Escolhe um elemento restante de forma segura.
         randomIndex = getRandomSecureIndex(currentIndex);
         currentIndex -= 1;
-
-        // E troca-o pelo elemento atual.
         temporaryValue = array[currentIndex];
         array[currentIndex] = array[randomIndex];
         array[randomIndex] = temporaryValue;
     }
-    return array.join('');
+    return Array.isArray(input) ? array : array.join('');
 }
 
 
-// --- 5. LÓGICA DE FORÇA DA SENHA ---
+// --- 5. LÓGICA DE FORÇA DA SENHA (Mantida a original) ---
 
-/**
- * Calcula a Entropia (bits) com base no modo e no tamanho do conjunto.
- */
-function calculateStrength(password, mode, charSetSize) {
+function capitalizeFirstLetter(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+function calculateStrength(password, mode, charSetSize, passphraseArray = null) {
     if (password.length === 0) return 0;
-
-    let entropy;
+    let entropy = 0;
     if (mode === 'char') {
         entropy = password.length * Math.log2(charSetSize);
     } else if (mode === 'passphrase') {
-        // Assume que o charSetSize é o tamanho da wordList
-        const numWords = password.split(separatorInput.value).length;
-        entropy = numWords * Math.log2(charSetSize); 
+        const numWords = passphraseArray.filter(item => wordList.includes(item.toLowerCase())).length;
+        entropy = numWords * Math.log2(wordList.length); 
+        if (capitalizeWords.checked) {
+            entropy += numWords * 1; 
+        }
+        const doIncludeDigits = includePassphraseDigits.checked;
+        if (doIncludeDigits && passphraseArray) {
+            const numElements = passphraseArray.length; 
+            const digitEntropy = Math.log2(10); 
+            const positionEntropy = Math.log2(numElements); 
+            entropy += digitEntropy + positionEntropy;
+        }
     }
     return entropy > 0 ? entropy : 0;
 }
 
-/**
- * Avalia e atualiza a força da senha na UI.
- */
-function updateStrengthIndicator(password, mode, charSetSize) {
-    const entropy = calculateStrength(password, mode, charSetSize);
+function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = null) {
+    const entropy = calculateStrength(password, mode, charSetSize, passphraseArray);
     let strength = "";
     let width = 0;
     let className = "";
@@ -142,7 +142,6 @@ function updateStrengthIndicator(password, mode, charSetSize) {
         return;
     }
 
-    // Mapeamento de Força (Baseado na entropia)
     if (entropy < 40) {
         strength = "Fraca";
         width = (entropy / 40) * 25; 
@@ -157,7 +156,7 @@ function updateStrengthIndicator(password, mode, charSetSize) {
         className = "strength-strong";
     } else {
         strength = "Muito Forte";
-        width = 75 + Math.min(25, (entropy - 80) / 20); // Limita o máximo
+        width = 75 + Math.min(25, (entropy - 80) / 20); 
         className = "strength-very-strong";
     }
     
@@ -167,21 +166,14 @@ function updateStrengthIndicator(password, mode, charSetSize) {
 }
 
 
-// --- 6. LÓGICA DE GERAÇÃO (COM VALIDAÇÃO DE CARACTERES) ---
+// --- 6. LÓGICA DE GERAÇÃO (Mantida a original) ---
 
-/**
- * Remove caracteres ambíguos de um conjunto de caracteres.
- */
 function removeAmbiguous(charSet) {
     const regex = new RegExp('[' + charSets.ambiguous.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ']', 'g');
     return charSet.replace(regex, '');
 }
 
-/**
- * Geração de Senha por Caractere (Melhoria 2 implementada)
- */
 function generateCharacterPassword() {
-    // Obtém o valor do input numérico, que é a fonte de verdade
     const length = parseInt(lengthNumberInput.value);
     const isAmbiguousExcluded = excludeAmbiguous.checked;
 
@@ -189,70 +181,44 @@ function generateCharacterPassword() {
     let password = "";
     let requiredChars = []; 
     
-    const processCharSet = (charSet) => {
-        if (isAmbiguousExcluded) {
-            return removeAmbiguous(charSet);
-        }
-        return charSet;
-    };
+    const processCharSet = (charSet) => isAmbiguousExcluded ? removeAmbiguous(charSet) : charSet;
 
-    // 1. Constrói o conjunto de caracteres e os caracteres obrigatórios
-    if (includeUppercase.checked) {
-        const chars = processCharSet(charSets.uppercase);
-        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
-    }
-    if (includeLowercase.checked) {
-        const chars = processCharSet(charSets.lowercase);
-        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
-    }
-    if (includeNumbers.checked) {
-        const chars = processCharSet(charSets.numbers);
-        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
-    }
-    if (includeSymbols.checked) {
-        const chars = processCharSet(charSets.symbols);
-        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
-    }
-    if (includeAccentedChars.checked) {
-        const chars = processCharSet(charSets.accented);
-        if(chars.length > 0) { allChars += chars; requiredChars.push(chars); }
-    }
+    // 1. Constrói o conjunto
+    if (includeUppercase.checked) { const chars = processCharSet(charSets.uppercase); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeLowercase.checked) { const chars = processCharSet(charSets.lowercase); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeNumbers.checked) { const chars = processCharSet(charSets.numbers); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeSymbols.checked) { const chars = processCharSet(charSets.symbols); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeAccentedChars.checked) { const chars = processCharSet(charSets.accented); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
     
-    // *** MELHORIA 2: VALIDAÇÃO DE CARACTERES ***
+    // 2. VALIDAÇÃO
     if (allChars.length === 0) {
         passwordDisplay.value = "**Selecione Pelo Menos um Tipo de Caractere!**";
         updateStrengthIndicator("", 'char', 0);
         return;
     }
     
-    // 2. Garante que os caracteres obrigatórios sejam incluídos primeiro
+    // 3. Garante que os obrigatórios sejam incluídos
     for (const charSet of requiredChars) {
-        const randomIndex = getRandomSecureIndex(charSet.length);
-        password += charSet[randomIndex];
+        password += charSet[getRandomSecureIndex(charSet.length)];
     }
     
-    // 3. Preenche o restante do comprimento e embaralha (mantendo a segurança)
+    // 4. Preenche e evita repetição trivial
     const remainingLength = length - requiredChars.length;
     let lastChar = password.slice(-1); 
     
     for (let i = 0; i < remainingLength; i++) {
         let newChar;
         let attempts = 0;
-        
-        // Evita repetição trivial de caracteres (ex: 'aaa')
         do {
-            const randomIndex = getRandomSecureIndex(allChars.length);
-            newChar = allChars[randomIndex];
+            newChar = allChars[getRandomSecureIndex(allChars.length)];
             attempts++;
-            // Se só houver 1 char disponível, evita loop infinito
             if (allChars.length === 1 && attempts > 1) break; 
         } while (newChar === lastChar); 
-
         password += newChar;
         lastChar = newChar; 
     }
 
-    // 4. Embaralha para que os caracteres obrigatórios não fiquem sempre no início
+    // 5. Embaralha
     password = secureShuffle(password);
     
     passwordDisplay.value = password;
@@ -260,38 +226,48 @@ function generateCharacterPassword() {
     saveToHistory(password);
 }
 
-
-/**
- * Geração de Passphrase
- */
 function generatePassphrase() {
-    // Obtém o valor do input numérico, que é a fonte de verdade
     const numWords = parseInt(numWordsNumberInput.value); 
     const separator = separatorInput.value || '-';
-    let passphrase = [];
+    const doCapitalize = capitalizeWords.checked;
+    const doIncludeDigits = includePassphraseDigits.checked;
 
-    if (numWords < 3 || numWords > 10) { // Validação simples
+    let passphraseArray = [];
+
+    if (numWords < 3 || numWords > 10) { 
         passwordDisplay.value = "Número de palavras inválido (3-10).";
         updateStrengthIndicator("", 'passphrase', 0);
         return;
     }
 
+    // 1. Gera as palavras
     for (let i = 0; i < numWords; i++) {
-        const randomIndex = getRandomSecureIndex(wordList.length);
-        passphrase.push(wordList[randomIndex]);
+        let word = wordList[getRandomSecureIndex(wordList.length)];
+        if (doCapitalize) {
+            word = capitalizeFirstLetter(word);
+        }
+        passphraseArray.push(word);
+    }
+    
+    // 2. Inclui o dígito
+    if (doIncludeDigits) {
+        const numDigits = getRandomSecureIndex(3) + 1; 
+        const maxNumber = 10**numDigits - 1; 
+        const digit = getRandomSecureIndex(maxNumber + 1); 
+        const digitString = String(digit).padStart(numDigits, '0'); 
+        const insertIndex = getRandomSecureIndex(passphraseArray.length + 1); 
+        passphraseArray.splice(insertIndex, 0, digitString);
     }
 
-    const finalPassphrase = passphrase.join(separator);
+    // 3. Junta
+    const finalPassphrase = passphraseArray.join(separator);
+    
     passwordDisplay.value = finalPassphrase;
-    updateStrengthIndicator(finalPassphrase, 'passphrase', wordList.length); 
+    updateStrengthIndicator(finalPassphrase, 'passphrase', wordList.length, passphraseArray); 
     saveToHistory(finalPassphrase);
 }
 
-/**
- * Função principal para gerar a senha/passphrase e atualizar a interface.
- */
 function generatePassword() {
-    // Reinicia o estado do botão copiar
     copyButton.textContent = 'Copiar';
     copyButton.classList.remove('copied');
 
@@ -303,17 +279,12 @@ function generatePassword() {
 }
 
 
-// --- 7. LÓGICA DE SINCRONIZAÇÃO (REINTEGRADA) ---
+// --- 7. LÓGICA DE SINCRONIZAÇÃO (Mantida a original) ---
 
-/**
- * Sincroniza o valor entre o input range e o input number (Comprimento).
- */
 function syncLengthInputs(source) {
     const value = source.value;
     const min = parseInt(lengthNumberInput.min);
     const max = parseInt(lengthNumberInput.max);
-    
-    // Garantir que o valor digitado esteja dentro dos limites
     const safeValue = Math.min(Math.max(parseInt(value) || min, min), max);
 
     if (source === lengthRangeInput) {
@@ -321,19 +292,13 @@ function syncLengthInputs(source) {
     } else {
         lengthRangeInput.value = safeValue;
     }
-    // Gera a senha após a sincronização
     generatePassword(); 
 }
 
-/**
- * Sincroniza o valor entre o input range e o input number (Palavras).
- */
 function syncNumWordsInputs(source) {
     const value = source.value;
     const min = parseInt(numWordsNumberInput.min);
     const max = parseInt(numWordsNumberInput.max);
-
-    // Garantir que o valor digitado esteja dentro dos limites
     const safeValue = Math.min(Math.max(parseInt(value) || min, min), max);
 
     if (source === numWordsRangeInput) {
@@ -341,28 +306,21 @@ function syncNumWordsInputs(source) {
     } else {
         numWordsRangeInput.value = safeValue;
     }
-    // Gera a senha após a sincronização
     generatePassword();
 }
 
 
-// --- 8. HISTÓRICO, COPIAR E TOAST (MANTIDOS E AJUSTADOS) ---
+// --- 8. HISTÓRICO, COPIAR E TOAST (Mantida a original) ---
 
 function saveToHistory(password) {
-    // Não salva mensagens de erro
     if (!password || password.includes("Selecione") || password.includes("inválido")) return;
-
     let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
-    
-    // Adiciona apenas se for diferente do último salvo
     if (history.length === 0 || history[history.length - 1] !== password) {
         history.push(password);
     }
-
     if (history.length > MAX_HISTORY) {
         history.shift(); 
     }
-
     sessionStorage.setItem('passwordHistory', JSON.stringify(history));
     renderHistory();
 }
@@ -370,14 +328,12 @@ function saveToHistory(password) {
 function renderHistory() {
     let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
     historyList.innerHTML = ''; 
-
     if (history.length === 0) {
         historyStatus.style.display = 'block';
         return;
     }
     historyStatus.style.display = 'none';
 
-    // Inverte a ordem para que o mais recente fique no topo da lista (graças ao CSS)
     history.slice().reverse().forEach((pwd) => {
         const item = document.createElement('div');
         item.classList.add('history-item');
@@ -411,7 +367,6 @@ function showToast(message) {
     toast.textContent = message;
 
     toastContainer.appendChild(toast);
-
     void toast.offsetWidth;
     toast.classList.add('show');
 
@@ -423,79 +378,109 @@ function showToast(message) {
     }, 3000);
 }
 
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        copyButton.textContent = '✅ Copiado!';
+        copyButton.classList.add('copied');
+        showToast("Senha copiada para a área de transferência!");
+        setTimeout(() => {
+            copyButton.textContent = 'Copiar';
+            copyButton.classList.remove('copied');
+        }, 1500);
+    });
+}
 
-// --- 9. LISTENERS DE EVENTOS ---
 
-// Listeners para sincronizar inputs de comprimento
+// --- 9. LÓGICA DE TEMA CORRIGIDA E SIMPLIFICADA 🌙☀️ ---
+
+/**
+ * Aplica o tema (light ou dark) ao body e salva no localStorage.
+ * @param {string} theme - 'dark' ou 'light'.
+ */
+function setTheme(theme) {
+    if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+/**
+ * Alterna entre o modo escuro e claro.
+ */
+function toggleTheme() {
+    const isDark = document.body.classList.contains('dark-mode');
+    setTheme(isDark ? 'light' : 'dark'); // Inverte o tema atual
+}
+
+/**
+ * Carrega o tema salvo no localStorage ao iniciar a página.
+ */
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    // Se o usuário já escolheu 'dark', aplica. Caso contrário, usa o padrão (light).
+    if (savedTheme === 'dark') {
+        setTheme('dark');
+    } else {
+        setTheme('light');
+    }
+}
+
+
+// --- 10. LISTENERS DE EVENTOS ---
+
+// Sincronização de Inputs
 lengthRangeInput.addEventListener('input', () => syncLengthInputs(lengthRangeInput));
 lengthNumberInput.addEventListener('input', () => syncLengthInputs(lengthNumberInput));
-
-// Listeners para sincronizar inputs de palavras
 numWordsRangeInput.addEventListener('input', () => syncNumWordsInputs(numWordsRangeInput));
 numWordsNumberInput.addEventListener('input', () => syncNumWordsInputs(numWordsNumberInput));
 
 // Listener para alternar modos
 const handleModeChange = () => {
     currentMode = modeChar.checked ? 'char' : 'passphrase';
-
     charSettingsDiv.style.display = currentMode === 'char' ? 'block' : 'none';
     passphraseSettingsDiv.style.display = currentMode === 'passphrase' ? 'block' : 'none';
     generateButton.textContent = currentMode === 'char' ? 'Gerar Senha' : 'Gerar Passphrase';
-    
-    // Gera uma nova senha no novo modo
     generatePassword();
 };
 modeChar.addEventListener('change', handleModeChange);
 modePassphrase.addEventListener('change', handleModeChange);
 
 
-// Listeners que regeneram a senha em tempo real ao mudar a configuração de caracteres
+// Listeners que regeneram a senha em tempo real
 [includeUppercase, includeLowercase, includeNumbers, includeSymbols, 
- includeAccentedChars, excludeAmbiguous].forEach(checkbox => {
-    checkbox.addEventListener('change', generatePassword);
+ includeAccentedChars, excludeAmbiguous, separatorInput, capitalizeWords, 
+ includePassphraseDigits].forEach(element => {
+    element.addEventListener(element.type === 'text' ? 'input' : 'change', generatePassword);
 });
 
-// Listener para o separador da passphrase
-separatorInput.addEventListener('input', () => {
-    if (currentMode === 'passphrase') {
-        generatePassword();
-    }
-});
 
 // Outros Listeners
 generateButton.addEventListener('click', generatePassword);
 copyButton.addEventListener('click', () => copyToClipboard(passwordDisplay.value));
 clearHistoryButton.addEventListener('click', clearHistory);
+themeToggle.addEventListener('click', toggleTheme); // Usa a função corrigida
 
 
-// Listener para alternar tema
-themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-    themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-});
-
-
-// --- 10. INICIALIZAÇÃO ---
+// --- 11. INICIALIZAÇÃO ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Carregar tema preferido
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        themeToggle.textContent = '☀️';
-    } else {
-        themeToggle.textContent = '🌙';
-    }
-
-    // 2. Inicializar os valores dos inputs numéricos com os ranges (sincronização inicial)
-    // Isso garante que os valores numéricos sejam usados na primeira geração.
+    // 1. Carrega o tema (CORRIGIDO)
+    loadTheme();
+    
+    // 2. Inicializa os valores e gera a primeira senha
     syncLengthInputs(lengthRangeInput);
     syncNumWordsInputs(numWordsRangeInput);
-
-    // 3. Inicializar modo e gerar a primeira senha
     handleModeChange(); 
+    
+    // 3. UX: Mensagem padrão
+    if (passwordDisplay.value.includes("Selecione") || passwordDisplay.value.includes("inválido")) {
+        passwordDisplay.value = "Clique em Gerar ou Ajuste as Opções"; 
+        updateStrengthIndicator("", currentMode, 0); 
+    }
 
-    // 4. Renderizar histórico
+    // 4. Renderiza histórico
     renderHistory();
 });

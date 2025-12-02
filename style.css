@@ -1,467 +1,511 @@
-/* --- style.css --- */
+/* --- style.css - VERSÃO SIMPLIFICADA E OTIMIZADA --- */
 
-/* --- DEFINIÇÃO DE VARIÁVEIS DE CORES --- */
+/* ========================================================================= */
+/* --- 1. DEFINIÇÃO DE VARIÁVEIS E TEMA --- */
+/* ========================================================================= */
 :root {
-    /* Tema Claro (Padrão) */
-    --bg-color: #f4f4f9;
-    --container-bg: #ffffff;
-    --text-color: #333333;
-    --secondary-text: #555555;
-    --input-bg: #eeeeee;
-    --input-border: #cccccc;
-    --settings-bg: #f9f9f9;
-    --primary-color: #28a745; /* Verde para o Gerar */
-    --primary-hover: #1e7e34;
-    --button-text: #ffffff;
-    --copy-button-bg: #007bff; /* Azul para Copiar */
-    --copy-button-hover: #0056b3;
-    --shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* Paleta */
+    --clr-light-bg: #f4f4f9;
+    --clr-dark-bg: #121212;
+    --clr-light-container: #ffffff;
+    --clr-dark-container: #1e1e1e;
+    --clr-light-text: #333333;
+    --clr-dark-text: #e0e0e0;
+    --clr-secondary-light: #555555;
+    --clr-secondary-dark: #bbbbbb;
+    --clr-input-light: #eeeeee;
+    --clr-input-dark: #2d2d2d;
+    --clr-border-light: #cccccc;
+    --clr-border-dark: #444444;
+    --clr-settings-light: #f9f9f9;
+    --clr-settings-dark: #252525;
+    --clr-shadow-light: 0 4px 10px rgba(0, 0, 0, 0.1);
+    --clr-shadow-dark: 0 4px 10px rgba(0, 0, 0, 0.5);
+    
+    /* Cores de Ação Fixas */
+    --primary-color: #28a745; /* Gerar (Verde) */
+    --primary-hover: #1e7e34;
+    --copy-color: #007bff; /* Copiar (Azul) */
+    --copy-hover: #0056b3;
+    --button-text: #ffffff;
+    --toast-bg: #333; /* Padrão claro/escuro */
+
+    /* Variáveis Ativas (Padrão: Claro) */
+    --bg-color: var(--clr-light-bg);
+    --container-bg: var(--clr-light-container);
+    --text-color: var(--clr-light-text);
+    --secondary-text: var(--clr-secondary-light);
+    --input-bg: var(--clr-input-light);
+    --input-border: var(--clr-border-light);
+    --settings-bg: var(--clr-settings-light);
+    --shadow: var(--clr-shadow-light);
 }
 
-/* Tema Escuro */
+/* Tema Escuro: Sobrescreve as variáveis ativas */
 body.dark-mode {
-    --bg-color: #121212;
-    --container-bg: #1e1e1e;
-    --text-color: #e0e0e0;
-    --secondary-text: #bbbbbb;
-    --input-bg: #2d2d2d;
-    --input-border: #444444;
-    --settings-bg: #252525;
-    --shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    --bg-color: var(--clr-dark-bg);
+    --container-bg: var(--clr-dark-container);
+    --text-color: var(--clr-dark-text);
+    --secondary-text: var(--clr-secondary-dark);
+    --input-bg: var(--clr-input-dark);
+    --input-border: var(--clr-border-dark);
+    --settings-bg: var(--clr-settings-dark);
+    --shadow: var(--clr-shadow-dark);
+    --toast-bg: #3a3a3a;
 }
 
-/* Cores fixas da barra de força (mantidas para consistência visual) */
+/* Cores fixas da barra de força (mantidas) */
 .strength-weak { background-color: #dc3545; }
 .strength-medium { background-color: #ffc107; }
 .strength-strong { background-color: var(--primary-color); } 
 .strength-very-strong { background-color: #17a2b8; }
 
 
-/* --- ESTILOS GERAIS (USANDO VARIÁVEIS) --- */
+/* ========================================================================= */
+/* --- 2. ESTILOS GERAIS E LAYOUT --- */
+/* ========================================================================= */
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    transition: background-color 0.3s, color 0.3s; /* Transição suave entre temas */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    transition: background-color 0.4s, color 0.4s;
 }
 
 .container {
-    background: var(--container-bg);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    width: 90%;
-    max-width: 450px;
-    position: relative; 
-    transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-/* --- ESTILO NOVO: Botão de troca de tema --- */
-#theme-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    transition: transform 0.3s, background-color 0.3s;
-    color: var(--secondary-text); 
-}
-#theme-toggle:hover {
-    transform: rotate(20deg) scale(1.1);
-    background-color: var(--settings-bg);
+    background: var(--container-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    width: 90%;
+    max-width: 450px;
+    position: relative; 
+    transition: background-color 0.4s, box-shadow 0.4s;
 }
 
 h1 {
-    text-align: center;
-    color: var(--text-color);
-    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    font-size: 1.8em;
 }
 
-.output-area {
-    display: flex;
-    margin-bottom: 20px;
-}
-
-#password-display {
-    flex-grow: 1;
-    padding: 10px;
-    font-size: 1.1em;
-    border: 1px solid var(--input-border);
-    border-radius: 5px 0 0 5px;
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    word-break: break-all; 
-    font-family: monospace; /* Fonte monoespaçada para senhas */
-}
-
-#copy-button {
-    padding: 10px 15px;
-    background-color: var(--copy-button-bg);
-    color: var(--button-text);
-    border: none;
-    border-radius: 0 5px 5px 0;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-weight: bold;
-}
-
-#copy-button:hover {
-    background-color: var(--copy-button-hover);
-}
-
-/* Estilo para o estado "Copiado" */
-#copy-button.copied {
-    background-color: var(--primary-color);
-    font-weight: bold;
+.settings, .history-container {
+    padding: 15px;
+    border-radius: 8px;
+    background-color: var(--settings-bg);
+    transition: background-color 0.4s;
 }
 
 .settings {
-    background-color: var(--settings-bg);
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    transition: background-color 0.3s;
+    margin-bottom: 20px;
 }
 
 .settings h2 {
-    font-size: 1.1em;
-    margin-top: 0;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--input-border);
-    padding-bottom: 5px;
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--input-border);
+    padding-bottom: 5px;
+    font-weight: 600;
 }
 
-/* ---------------------------------------------------- */
-/* --- ESTILOS DE INPUTS DE VALOR (COMPRIMENTO, PALAVRAS) --- */
-/* ---------------------------------------------------- */
-
-/* NOVO: Container para alinhar Range e Number input */
-.slider-group {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Espaço entre o slider e o input numérico */
-    width: 50%; /* Ocupa a metade direita do setting-item */
+/* Separador horizontal */
+.settings hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--input-border);
+    margin: 15px 0;
 }
 
-/* Estilo para o Range Input */
-#length-range, #num-words-range {
-    flex-grow: 1;
-    -webkit-appearance: none; /* Reset para customização */
-    appearance: none;
-    height: 8px;
-    background: var(--input-border);
+
+/* ========================================================================= */
+/* --- 3. INPUTS E BOTÕES REUTILIZÁVEIS --- */
+/* ========================================================================= */
+
+/* Estilo Base para Todos os Botões Primários */
+#generate-button, #copy-button, .history-copy-btn {
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--button-text);
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+/* Botão Principal */
+#generate-button {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--primary-color);
     border-radius: 5px;
-    cursor: pointer;
-    margin: 0;
+    font-size: 1.2em;
+}
+#generate-button:hover { background-color: var(--primary-hover); }
+
+/* Botões Pequenos (Copiar e Histórico) */
+#copy-button, .history-copy-btn {
+    padding: 10px 15px;
+    background-color: var(--copy-color);
+}
+#copy-button:hover, .history-copy-btn:hover { background-color: var(--copy-hover); }
+
+#copy-button:active, #generate-button:active { transform: scale(0.98); }
+
+/* Estilo para o estado "Copiado" */
+#copy-button.copied {
+    background-color: var(--primary-color);
 }
 
-/* Estilo para o Thumb (a bolinha) do Range Input - Webkit (Chrome/Safari) */
-#length-range::-webkit-slider-thumb, 
-#num-words-range::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    cursor: pointer;
-    border: 3px solid var(--container-bg); 
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-    transition: background-color 0.3s;
+/* Inputs de Texto/Número/Display */
+#password-display, #length-number, #num-words-number, .setting-item input[type="text"]#separator, .history-item {
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 4px;
+    transition: border-color 0.3s, background-color 0.3s;
 }
 
-/* Estilo para o Thumb (a bolinha) do Range Input - Firefox */
-#length-range::-moz-range-thumb, 
-#num-words-range::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: var(--primary-color);
-    border-radius: 50%;
-    cursor: pointer;
-    border: 3px solid var(--container-bg); 
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-    transition: background-color 0.3s;
+/* Oculta setas (spin buttons) para number inputs - Agrupado */
+#length-number::-webkit-inner-spin-button, #length-number::-webkit-outer-spin-button,
+#num-words-number::-webkit-inner-spin-button, #num-words-number::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
 }
 
-/* NOVO: Estilo para o Number Input */
-#length-number, #num-words-number {
-    width: 50px; 
-    text-align: center;
-    padding: 5px;
-    border: 1px solid var(--input-border);
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    border-radius: 3px;
-    /* Para controlar o tamanho e aparência do input */
+
+/* ========================================================================= */
+/* --- 4. ÁREA DE SAÍDA (DISPLAY) --- */
+/* ========================================================================= */
+
+.output-area {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+#password-display {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 1.1em;
+    border-radius: 5px 0 0 5px;
+    word-break: break-all; 
+    font-family: 'Roboto Mono', monospace; 
+    min-height: 40px;
+}
+
+#copy-button {
+    border-radius: 0 5px 5px 0;
     font-size: 1em;
 }
 
-/* REMOÇÃO E CORREÇÃO: Removendo estilos antigos para os inputs de número/range */
-/* O código abaixo é removido/substituído pela nova lógica
-#length, #num-words, #separator { ... } */
 
-/* Mantendo apenas a remoção das setas para os number inputs: */
-#length-number::-webkit-inner-spin-button, 
-#length-number::-webkit-outer-spin-button,
-#num-words-number::-webkit-inner-spin-button,
-#num-words-number::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
+/* ========================================================================= */
+/* --- 5. SLIDERS DE COMPRIMENTO E PALAVRAS --- */
+/* ========================================================================= */
+
+.slider-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+    width: 50%; 
 }
 
-/* Estilo para o separador (mantido) */
+/* Range Input (a trilha) */
+#length-range, #num-words-range {
+    flex-grow: 1;
+    -webkit-appearance: none; 
+    appearance: none;
+    height: 6px;
+    background: var(--input-border);
+    border-radius: 3px;
+    cursor: grab;
+    margin: 0;
+    transition: background 0.3s;
+}
+
+/* Thumb (a bolinha) - Agrupado Webkit/Moz */
+#length-range::-webkit-slider-thumb, #num-words-range::-webkit-slider-thumb,
+#length-range::-moz-range-thumb, #num-words-range::-moz-range-thumb {
+    -webkit-appearance: none; /* Webkit */
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: grab;
+    border: 3px solid var(--container-bg); 
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Number Input */
+#length-number, #num-words-number {
+    width: 45px;
+    text-align: center;
+    padding: 5px 8px;
+    font-size: 1em;
+}
+
+/* Separador */
 .setting-item input[type="text"]#separator {
-    width: 30px; 
-    margin-left: 10px;
+    width: 40px;
+    padding: 5px 8px;
+    text-align: center;
 }
 
 
-/* NOVO: Estilo para o separador de modo */
-.settings hr {
-    border: 0;
-    height: 1px;
-    background-color: var(--input-border);
-    margin: 15px 0;
-}
+/* ========================================================================= */
+/* --- 6. CHECKBOXES E RADIO BUTTONS --- */
+/* ========================================================================= */
 
 .setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 .setting-item label {
-    flex-grow: 1; 
-    cursor: pointer;
-    color: var(--secondary-text);
-}
-.setting-item input[type="checkbox"] {
-    margin-right: 10px;
-    cursor: pointer;
-    transform: scale(1.2); 
-    accent-color: var(--primary-color); 
+    flex-grow: 1; 
+    cursor: pointer;
+    color: var(--secondary-text);
 }
 
-/* NOVO: Estilos para Rádio Buttons (Mode Selector) */
+.setting-item input[type="checkbox"] {
+    margin-left: 5px;
+    cursor: pointer;
+    transform: scale(1.1); 
+    accent-color: var(--primary-color); 
+}
+
+/* Radio Buttons (Mode Selector) */
 .mode-selector {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
 .mode-selector input[type="radio"] {
-    display: none;
+    display: none;
 }
 
 .mode-selector label {
-    cursor: pointer;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-weight: bold;
-    color: var(--secondary-text);
-    border: 2px solid var(--input-border);
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    cursor: pointer;
+    padding: 8px 18px;
+    border-radius: 25px;
+    font-weight: bold;
+    color: var(--secondary-text);
+    border: 2px solid var(--input-border);
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.mode-selector label:hover {
+    border-color: var(--copy-color);
 }
 
 .mode-selector input[type="radio"]:checked + label {
-    background-color: var(--copy-button-bg);
-    color: var(--button-text);
-    border-color: var(--copy-button-bg);
+    background-color: var(--copy-color);
+    color: var(--button-text);
+    border-color: var(--copy-color);
 }
 
 
-#generate-button {
-    width: 100%;
-    padding: 15px;
-    background-color: var(--primary-color);
-    color: var(--button-text);
-    border: none;
-    border-radius: 5px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-weight: bold;
-}
+/* ========================================================================= */
+/* --- 7. INDICADOR DE FORÇA --- */
+/* ========================================================================= */
 
-#generate-button:hover {
-    background-color: var(--primary-hover);
-}
-
-/* --- ESTILOS PARA O INDICADOR DE FORÇA --- */
-
-.strength-indicator-container {
-    margin-bottom: 10px;
+.strength-indicator-container { margin-bottom: 15px; }
+.strength-label { font-size: 0.9em; color: var(--secondary-text); }
+.strength-text {
+    text-align: right;
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-top: 5px;
+    color: var(--secondary-text);
 }
 
 .strength-indicator {
-    height: 10px;
-    background-color: var(--input-bg);
-    border-radius: 5px;
-    margin-top: 10px;
-    overflow: hidden;
-    border: 1px solid var(--input-border);
+    height: 10px;
+    background-color: var(--input-bg);
+    border-radius: 5px;
+    margin-top: 5px;
+    overflow: hidden;
+    border: 1px solid var(--input-border);
 }
 
 .strength-bar {
-    height: 100%;
-    width: 0; 
-    transition: width 0.3s ease-in-out, background-color 0.3s;
+    height: 100%;
+    width: 0; 
+    transition: width 0.3s ease-in-out, background-color 0.3s;
 }
 
-.strength-text {
-    text-align: right;
-    font-size: 0.9em;
-    font-weight: bold;
-    margin-top: 5px;
-    color: var(--secondary-text);
+
+/* ========================================================================= */
+/* --- 8. TEMA E TOAST --- */
+/* ========================================================================= */
+
+#theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: transform 0.3s, background-color 0.3s;
+    color: var(--secondary-text); 
+    line-height: 1;
+}
+#theme-toggle:hover {
+    transform: rotate(20deg) scale(1.1);
+    background-color: var(--settings-bg);
 }
 
-/* --- ESTILOS PARA O TOAST NOTIFICATION --- */
+/* Gerenciamento de Ícones do Tema */
+#theme-toggle .icon-light { display: none; } /* Padrão: mostra a lua (icon-dark) */
+body.dark-mode #theme-toggle .icon-light { display: inline; } /* Dark: mostra o sol (icon-light) */
+body.dark-mode #theme-toggle .icon-dark { display: none; }
+
+
+/* Toast Notification */
 #toast-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
 }
-
 .toast {
-    background-color: #333; 
-    color: white;
-    padding: 15px 20px;
-    border-radius: 5px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    margin-bottom: 10px;
-    opacity: 0; 
-    transition: opacity 0.5s, transform 0.5s;
-    transform: translateY(100%); 
+    background-color: var(--toast-bg);
+    color: var(--button-text);
+    padding: 15px 20px;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 10px;
+    opacity: 0; 
+    transition: opacity 0.4s, transform 0.4s;
+    transform: translateY(100%); 
 }
-
 .toast.show {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
 }
 
 
-/* ------------------------------------------- */
-/* --- NOVOS ESTILOS PARA HISTÓRICO DE SENHAS --- */
-/* ------------------------------------------- */
+/* ========================================================================= */
+/* --- 9. HISTÓRICO DE SENHAS --- */
+/* ========================================================================= */
 
 .history-container {
-    margin-top: 25px;
-    padding: 15px;
-    border: 1px dashed var(--input-border); 
-    border-radius: 5px;
-    background-color: var(--settings-bg);
+    margin-top: 25px;
+    border: 1px dashed var(--input-border); 
 }
 
 .history-container h3 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0;
-    margin-bottom: 10px;
-    color: var(--text-color);
-    font-size: 1.1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-color);
+    font-size: 1.2em;
 }
 
 #clear-history-button {
-    background: none;
-    border: 1px solid var(--copy-button-bg);
-    color: var(--copy-button-bg);
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.8em;
-    transition: background-color 0.3s, color 0.3s;
+    background: none;
+    border: 1px solid var(--copy-color);
+    color: var(--copy-color);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8em;
 }
 
 #clear-history-button:hover {
-    background-color: var(--copy-button-bg);
-    color: var(--button-text);
+    background-color: var(--copy-color);
+    color: var(--button-text);
 }
 
 .password-history-list {
-    display: flex;
-    flex-direction: column-reverse; 
-    gap: 10px;
+    display: flex;
+    flex-direction: column-reverse; 
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 5px; 
 }
 
+/* Otimização de Scrollbar para Histórico */
+.password-history-list::-webkit-scrollbar { width: 8px; }
+.password-history-list::-webkit-scrollbar-thumb { 
+    background-color: var(--input-border); 
+    border-radius: 4px;
+}
+body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-color: #555; }
+
 .history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--input-bg);
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid var(--input-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
 }
 
 .history-password {
-    flex-grow: 1;
-    font-family: monospace; 
-    font-size: 0.95em;
-    overflow-x: auto; 
-    white-space: nowrap;
-    margin-right: 10px;
-    color: var(--text-color);
+    flex-grow: 1;
+    font-family: 'Roboto Mono', monospace; 
+    font-size: 0.95em;
+    overflow-x: auto; 
+    white-space: nowrap;
+    margin-right: 10px;
+    color: var(--text-color);
+    /* Oculta barra de rolagem horizontal */
+    -ms-overflow-style: none; scrollbar-width: none;
 }
+.history-password::-webkit-scrollbar { display: none; }
 
 .history-copy-btn {
-    padding: 5px 10px;
-    background-color: var(--copy-button-bg); 
-    color: var(--button-text);
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 0.8em;
-    transition: background-color 0.3s;
-}
-
-.history-copy-btn:hover {
-    background-color: var(--copy-button-hover);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.8em;
 }
 
 .history-status {
-    color: var(--secondary-text);
-    font-style: italic;
-    text-align: center;
-    margin-top: 5px;
-    font-size: 0.9em;
-    padding: 10px; 
-    border: 1px solid var(--input-border);
-    border-radius: 4px;
-    background-color: var(--input-bg);
+    color: var(--secondary-text);
+    font-style: italic;
+    text-align: center;
+    margin-top: 5px;
+    font-size: 0.9em;
+    padding: 10px; 
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
 }
 
-/* --- RESPONSIVIDADE BÁSICA --- */
+
+/* ========================================================================= */
+/* --- 10. RESPONSIVIDADE BÁSICA --- */
+/* ========================================================================= */
+
 @media (max-width: 500px) {
-    .container {
-        padding: 20px;
-    }
-    .output-area {
-        flex-direction: column;
-    }
-    #password-display {
-        border-radius: 5px; /* Remove o arredondamento de canto após a quebra de linha */
-        margin-bottom: 10px;
-    }
-    #copy-button {
-        border-radius: 5px;
-        width: 100%;
-    }
-    /* Ajuste de responsividade para o slider-group em telas menores */
+    .container { padding: 20px; }
+    .output-area { flex-direction: column; }
+    #password-display { border-radius: 5px; margin-bottom: 10px; }
+    #copy-button { border-radius: 5px; width: 100%; padding: 12px 15px; }
+    
+    /* Ajuste responsivo principal para o slider-group */
+    .setting-item {
+        flex-direction: column; 
+        align-items: flex-start; 
+    }
     .slider-group {
-        width: 60%; /* Dê mais espaço para o input numérico em telas menores, se necessário */
+        width: 100%; 
+        margin-top: 5px;
+    }
+    .setting-item input[type="text"]#separator {
+        margin-top: 5px;
     }
 }
