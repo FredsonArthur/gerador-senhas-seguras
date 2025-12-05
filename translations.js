@@ -24,6 +24,20 @@ var translations = {
         medium: "Média",
         strong: "Forte",
         veryStrong: "Muito Forte",
+        
+        // 🔑 NOVAS CHAVES DE TEMPO E AVALIAÇÃO DE SEGURANÇA (Para Força Aprimorada) 🔑
+        breakTimeLabel: "Tempo de Quebra Estimado:",
+        time_seconds: "segundos",
+        time_minutes: "minutos",
+        time_hours: "horas",
+        time_days: "dias",
+        time_months: "meses",
+        time_years: "anos",
+        time_millions_years: "Milhões de Anos",
+        
+        // CHAVES DE ERRO E TOAST (Crucial para o script.js)
+        errorSelectChar: "Selecione pelo menos um tipo de caractere.",
+        errorInvalidWords: "O número de palavras é inválido (3-10).",
 
         // Configurações de Caracteres
         configCharTitle: "⚙️ Configurações de Caracteres",
@@ -44,10 +58,10 @@ var translations = {
 
         // Histórico
         historyTitle: "📜 Histórico da Sessão",
-        historyClear: "Limpar Histórico",
+        historyClear: "Histórico de senhas limpo.",
         historyNote: "*O histórico é temporário e é apagado ao fechar a aba.*",
         historyEmpty: "Nenhuma senha gerada ainda.",
-        historyPasswordCopied: "Copiado!"
+        historyPasswordCopied: "Copiado!" 
     },
     "en-us": {
         // Titles and Modes
@@ -69,6 +83,20 @@ var translations = {
         medium: "Medium",
         strong: "Strong",
         veryStrong: "Very Strong",
+        
+        // 🔑 NOVAS CHAVES DE TEMPO E AVALIAÇÃO DE SEGURANÇA (Para Força Aprimorada) 🔑
+        breakTimeLabel: "Estimated Break Time:",
+        time_seconds: "seconds",
+        time_minutes: "minutes",
+        time_hours: "hours",
+        time_days: "days",
+        time_months: "months",
+        time_years: "years",
+        time_millions_years: "Million Years",
+        
+        // CHAVES DE ERRO E TOAST (Crucial para o script.js)
+        errorSelectChar: "Select at least one character type.",
+        errorInvalidWords: "The number of words is invalid (3-10).",
 
         // Character Settings
         configCharTitle: "⚙️ Character Settings",
@@ -89,26 +117,27 @@ var translations = {
 
         // History
         historyTitle: "📜 Session History",
-        historyClear: "Clear History",
+        historyClear: "Password history cleared.",
         historyNote: "*History is temporary and is cleared when closing the tab.*",
         historyEmpty: "No passwords generated yet.",
-        historyPasswordCopied: "Copied!"
+        historyPasswordCopied: "Copied!" 
     }
 };
 
 // --- Implementação do wordLists (Usando 'var' para escopo global) ---
 
 var wordLists = {
+    // ⚠️ ATENÇÃO: SUBSTITUA ESTES EXEMPLOS PELAS SUAS LISTAS DICARE COMPLETA DE 7776 PALAVRAS
     'pt-br': [
-        // Substitua com sua lista de 7776 palavras em português
-        // Exemplo:
         "abelha", "acaso", "água", "ajuda", "andar", "anexo", "apelo", "ar", 
-        // ... (7768 palavras restantes)
+        "barco", "bazar", "beijo", "bloco", "buraco", "cabide", "cadeira", "caixa", 
+        "chave", "chuva", "coelho", "copo", "corda", "corpo", "dados", "doce",
+        // ... (Insira o restante da lista Diceware completa em português aqui)
     ],
     'en-us': [
-        // Substitua com sua lista de 7776 palavras em inglês (Diceware)
-        // Exemplo:
         "able", "acorn", "agent", "alias", "album", "alien", "angel", "aqua",
-        // ... (7768 palavras restantes)
+        "bacon", "badge", "baker", "bamboo", "basic", "beard", "blitz", "breeze",
+        "cabin", "cable", "calm", "candy", "chart", "chief", "clean", "color"
+        // ... (Insira o restante da lista Diceware completa em inglês aqui)
     ]
 };
