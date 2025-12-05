@@ -63,4 +63,4 @@ Contribuições, *issues* e pedidos de recursos são bem-vindos! Sinta-se à von
 Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE.md](LICENSE.md) para mais detalhes.
 
 ---
-Feito com ❤️ por **[FREDSON ARTHUR]**
+Feito com ❤️ por **FREDSON ARTHUR**
