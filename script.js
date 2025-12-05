@@ -1,25 +1,22 @@
-// --- script.js - CÓDIGO FINAL, LIMPO E OTIMIZADO (Lógica Pura) ---
+/* --- script.js - CÓDIGO FINAL, LIMPO E OTIMIZADO (Lógica Pura) --- */
 
 // NOTA: Para rodar este script, você precisaria de um arquivo 'translations.js' 
-// que defina 'translations' e 'wordLists' (dicionários de palavras), além do HTML e CSS.
+// que defina 'translations' e 'wordLists', além do HTML e CSS.
 
 // --- 1. CONFIGURAÇÕES E VARIÁVEIS GLOBAIS (NÃO dependem do DOM) ---
 
-// CONSTANTE PARA A VALIDAÇÃO DE ENTROPIA
-// Requisito mínimo de palavras no dicionário para considerar a Passphrase segura (8 bits de entropia log2(256)=8).
-const MIN_WORDS_REQUIRED = 256; 
+// 🚨 NOVO: CONSTANTE PARA A VALIDAÇÃO DE ENTROPIA
+const MIN_WORDS_REQUIRED = 256; // Mínimo de palavras para garantir 8 bits de entropia.
 
 // NOTA: 'translations' e 'wordLists' são carregados globalmente a partir de 'translations.js'
 
-let generatedPasswords = []; // Array para armazenar o histórico de senhas geradas na sessão
-const MAX_HISTORY = 10;      // Limite de itens no histórico
-let currentMode = 'char';    // Modo inicial de geração: 'char' (caractere) ou 'passphrase'
+let generatedPasswords = [];
+const MAX_HISTORY = 10;
+let currentMode = 'char'; // 'char' ou 'passphrase'
 
-// Variáveis de escopo global para acesso seguro aos textos de tradução.
-// São atualizadas pela função applyTranslations.
+// Variáveis de escopo global para acesso seguro, atualizadas em applyTranslations
 let t; 
 let activeWordList; 
-// Carrega o idioma salvo no Local Storage ou define 'pt-br' como padrão
 let currentLang = localStorage.getItem('language') || 'pt-br';
 
 // --- 2. CONJUNTOS DE CARACTERES ---
@@ -28,805 +25,859 @@ const charSets = {
     lowercase: 'abcdefghijklmnopqrstuvwxyz',
     numbers: '0123456789',
     symbols: '!@#$%^&*()_+~`|}{[]:;?><,./-=',
-    accented: 'áàãâéèêíìîóòõôúùûç',
-    // Caracteres que podem ser facilmente confundíveis visualmente
-    ambiguous: 'lIO0' 
+    accented: 'áàãâéèêíìîóòõôúùûçÁÀÃÂÉÈÊÍÌÎÓÒÕÔÚÙÛÇ',
+    ambiguous: 'il1Lo0O' // Caracteres para exclusão
 };
 
-// --- 3. FUNÇÕES UTILITY CORE ---
 
-/**
- * Gera um número inteiro aleatório entre min (inclusivo) e max (inclusivo).
- * @param {number} min 
- * @param {number} max 
- * @returns {number} 
- */
-function getRandomInt(min, max) {
-    // Usa Math.floor e (max - min + 1) para garantir a inclusão de 'max'
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+// --- 3. FUNÇÕES DE UTILIDADE E SEGURANÇA (Sem dependência do DOM) ---
+
+function getRandomSecureIndex(max) {
+    const randomArray = new Uint32Array(1); 
+    let randomNumber;
+    const range = 4294967296; // 2^32
+    const maxRandom = range - (range % max);
+    
+    do {
+        window.crypto.getRandomValues(randomArray);
+        randomNumber = randomArray[0];
+    } while (randomNumber >= maxRandom);
+
+    return randomNumber % max;
 }
 
-/**
- * Embaralha (algoritmo Fisher-Yates) um array.
- * É essencial para misturar a ordem dos caracteres na senha e evitar padrões previsíveis 
- * (ex: todos os números no final).
- * @param {Array<string>} array - O array a ser embaralhado.
- * @returns {Array<string>} O array embaralhado.
- */
-function shuffleArray(array) {
-    let shuffled = [...array]; 
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = getRandomInt(0, i); 
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+function secureShuffle(input) {
+    let array = Array.isArray(input) ? input : input.split('');
+    let currentIndex = array.length, temporaryValue, randomIndex;
+
+    while (0 !== currentIndex) {
+        randomIndex = getRandomSecureIndex(currentIndex);
+        currentIndex -= 1;
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
     }
-    return shuffled;
+    return Array.isArray(input) ? array : array.join('');
+}
+
+
+// --- 4. LÓGICA DE FORÇA DA SENHA (Recebe referências do DOM como argumentos ou usa escopo de closure) ---
+
+function capitalizeFirstLetter(word) {
+    return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 /**
- * Cria o conjunto final de caracteres permitido (charset) baseado nas opções do usuário.
- * @param {Object} inputs - Objeto contendo os estados dos checkboxes.
- * @returns {string} O conjunto de caracteres combinados.
+ * Obtém a lista de palavras a ser usada (personalizada se houver, ou a padrão).
+ * Atualiza o aviso de segurança da lista personalizada.
+ * @param {HTMLTextAreaElement} customWordlist - Elemento textarea da lista personalizada.
+ * @param {HTMLElement} customDictWarning - Elemento para exibir o aviso.
+ * @returns {Array<string>} A lista de palavras efetiva.
  */
-function getCharSet(inputs) {
-    let charset = '';
-    // Concatena os conjuntos de caracteres selecionados
-    if (inputs.includeLowercase.checked) charset += charSets.lowercase;
-    if (inputs.includeUppercase.checked) charset += charSets.uppercase;
-    if (inputs.includeNumbers.checked) charset += charSets.numbers;
-    if (inputs.includeSymbols.checked) charset += charSets.symbols;
-    if (inputs.includeAccentedChars.checked) charset += charSets.accented;
+function getEffectiveWordList(customWordlist, customDictWarning) {
+    let customList = [];
+    
+    // 1. Processa a lista personalizada
+    if (customWordlist && customWordlist.value.trim().length > 0) {
+        customList = customWordlist.value
+            .toLowerCase()
+            .split(/[\s,]+/) // Divide por espaço ou vírgula (incluindo nova linha)
+            .filter(word => word.length > 0)
+            .map(word => word.trim()) // Adicionado para limpar espaços extras no início/fim
+            // 🚨 REFORÇO DE SANITIZAÇÃO: Remove palavras que ainda contenham espaços internos
+            .filter(word => !word.includes(' ')); 
+    }
+    
+    // 2. Determina a lista efetiva
+    const listToUse = customList.length > 0 ? customList : activeWordList;
 
-    // Remove caracteres ambíguos se a opção estiver marcada
-    if (inputs.excludeAmbiguous.checked) {
-        // Cria uma regex para remover os caracteres ambíguos do conjunto final
-        const regex = new RegExp('[' + charSets.ambiguous.replace(/([\[\]\\])/g, '\\$1') + ']', 'g');
-        charset = charset.replace(regex, '');
+    // 3. Atualiza o aviso para o usuário (só se a lista personalizada estiver ativa)
+    if (customDictWarning) {
+        // 🚨 VALIDAÇÃO DE ENTROPIA IMPLEMENTADA AQUI
+        if (customList.length > 0 && customList.length < MIN_WORDS_REQUIRED) {
+            customDictWarning.textContent = t.customDictWarning;
+            customDictWarning.style.display = 'block';
+        } else {
+            customDictWarning.textContent = '';
+            customDictWarning.style.display = 'none';
+        }
     }
 
-    return charset;
+    return listToUse;
 }
 
-// --- 4. FUNÇÕES DE SEGURANÇA E FORÇA (ENTROPIA) ---
 
 /**
- * Calcula a entropia da senha em bits, baseada na fórmula:
- * Entropia = Comprimento * log2(Tamanho do Conjunto)
- * @param {number} poolSize - O tamanho do conjunto de caracteres ou palavras (ex: 62 para a+A+0-9).
- * @param {number} length - O comprimento da senha ou número de palavras.
- * @returns {number} A entropia em bits, arredondada.
+ * Calcula a entropia da senha (em bits) baseada no modo.
+ * @param {HTMLInputElement} capitalizeWords - Referência ao checkbox.
+ * @param {HTMLInputElement} includePassphraseDigits - Referência ao checkbox.
  */
-function calculateEntropy(poolSize, length) {
-    if (poolSize === 0 || length === 0) return 0;
-    return Math.round(length * Math.log2(poolSize));
-}
-
-/**
- * Atualiza visualmente a barra e o texto da força da senha.
- * @param {string} password - A senha a ser avaliada.
- * @param {string} mode - Modo de geração ('char' ou 'passphrase').
- * @param {number} charSetSize - Tamanho do conjunto de caracteres (modo char).
- * @param {number} wordPoolSize - Tamanho do dicionário de palavras (modo passphrase).
- * @param {HTMLElement} bar - O elemento da barra de progresso.
- * @param {HTMLElement} text - O elemento do texto da força.
- * @param {Object} charInputs - Opções de caractere (para validação).
- * @param {Object} passphraseInputs - Opções de passphrase (para validação).
- */
-function updateStrengthIndicator(password, mode, charSetSize, wordPoolSize, bar, text, charInputs, passphraseInputs) {
+function calculateStrength(password, mode, charSetSize, passphraseArray = null, capitalizeWords, includePassphraseDigits, effectiveWordList = null) {
+    if (password.length === 0) return 0;
     let entropy = 0;
-    let poolSize = 0;
-    let length = 0;
-    const MAX_ENTROPY = 128; // Entropia máxima para 100% da barra (padrão de referência)
-
+    
     if (mode === 'char') {
-        poolSize = charSetSize;
-        length = parseInt(charInputs.lengthNumber.value, 10);
-        entropy = calculateEntropy(poolSize, length);
-
-        // Se o charset for 0, é um erro de configuração (força 0)
-        if (poolSize === 0) {
-            text.textContent = t.strengthError;
-            bar.style.width = '0%';
-            bar.className = 'strength-bar strength-weak';
-            bar.setAttribute('aria-valuenow', 0);
-            return;
-        }
-
-    } else if (mode === 'passphrase') {
-        poolSize = wordPoolSize;
-        length = parseInt(passphraseInputs.numWordsNumber.value, 10);
+        entropy = password.length * Math.log2(charSetSize);
+    } else if (mode === 'passphrase' && effectiveWordList) {
+        const listSize = effectiveWordList.length;
         
-        // Fatores de aumento do pool (simplificação)
-        let totalPoolSize = poolSize;
-        if (passphraseInputs.capitalizeWords.checked) {
-            totalPoolSize *= 2; // Capitalização duplica as possibilidades
-        }
-        if (passphraseInputs.includePassphraseDigits.checked) {
-            totalPoolSize += 10; // Adiciona o pool de dígitos (0-9)
-        }
-
-        // Validação de segurança: Dicionário customizado muito pequeno
-        if (poolSize < MIN_WORDS_REQUIRED) {
-            text.textContent = t.errorInvalidWords;
-            bar.style.width = '0%';
-            bar.className = 'strength-bar strength-weak';
-            bar.setAttribute('aria-valuenow', 0);
-            return;
+        // Entropia baseada no tamanho da lista efetiva
+        const numWordsInArray = passphraseArray ? passphraseArray.filter(item => effectiveWordList.includes(item.toLowerCase())).length : password.split(/[^a-zA-ZáàãâéèêíìîóòõôúùûçÁÀÃÂÉÈÊÍÌÎÓÒÕÔÚÙÛÇ]+/).filter(w => effectiveWordList.includes(w.toLowerCase())).length;
+        
+        entropy = numWordsInArray * Math.log2(listSize); 
+        
+        if (capitalizeWords.checked) {
+            entropy += numWordsInArray * 1; 
         }
         
-        entropy = calculateEntropy(totalPoolSize, length);
+        const doIncludeDigits = includePassphraseDigits.checked;
+        if (doIncludeDigits && passphraseArray) {
+            // Conta quantos elementos no array são dígitos puros
+            const numDigitsIncluded = passphraseArray.filter(item => /^\d+$/.test(item)).length;
+
+            if (numDigitsIncluded > 0) {
+                 // Cálculo de entropia de dígitos
+                 const totalDigitEntropy = passphraseArray.reduce((acc, item) => {
+                     const match = item.match(/^(\d+)$/);
+                     if (match) {
+                         const n = match[1].length;
+                         return acc + (n * Math.log2(10));
+                     }
+                     return acc;
+                 }, 0);
+                 
+                 // Adiciona a entropia da posição dos dígitos
+                 const numElements = passphraseArray.length;
+                 const positionEntropy = Math.log2(numElements); 
+                 
+                 entropy += totalDigitEntropy + (numDigitsIncluded * positionEntropy);
+            }
+        }
     }
+    return entropy > 0 ? entropy : 0;
+}
 
-    // Classificação da Força em Bits (Critérios Comuns)
-    let strengthText;
-    let barClass;
+/**
+ * Converte a entropia (bits) em tempo de quebra e formata em string legível.
+ * @param {number} entropy - Entropia em bits.
+ * @returns {string} Tempo de quebra formatado.
+ */
+function formatBreakTime(entropy) {
+    // 1 trilhão de tentativas por segundo (10^12)
+    const ATTACKS_PER_SECOND = 1e12; 
+    
+    // Total de combinações (2^entropy)
+    const totalCombinations = Math.pow(2, entropy);
+    
+    // Tempo em segundos
+    const timeInSeconds = totalCombinations / ATTACKS_PER_SECOND;
 
-    if (entropy < 40) {
-        strengthText = t.strengthWeak;
-        barClass = 'strength-weak';
-    } else if (entropy < 60) {
-        strengthText = t.strengthMedium;
-        barClass = 'strength-medium';
-    } else if (entropy < 80) {
-        strengthText = t.strengthStrong;
-        barClass = 'strength-strong';
+    // Constantes de tempo
+    const MINUTE = 60;
+    const HOUR = 3600;
+    const DAY = 86400;
+    const YEAR = 31536000;
+    
+    if (timeInSeconds < MINUTE) {
+        return `${timeInSeconds.toFixed(0)} ${t.time_seconds}`;
+    } else if (timeInSeconds < HOUR) {
+        return `${(timeInSeconds / MINUTE).toFixed(0)} ${t.time_minutes}`;
+    } else if (timeInSeconds < DAY) {
+        return `${(timeInSeconds / HOUR).toFixed(0)} ${t.time_hours}`;
+    } else if (timeInSeconds < YEAR) {
+        return `${(timeInSeconds / DAY).toFixed(0)} ${t.time_days}`;
+    } else if (timeInSeconds < 1000 * YEAR) {
+        // Se for menos de 1000 anos, mostra em anos
+        return `${(timeInSeconds / YEAR).toFixed(0)} ${t.time_years}`;
     } else {
-        strengthText = t.strengthVeryStrong;
-        barClass = 'strength-very-strong';
+        // Para tempos muito longos, simplifica para milhões de anos
+        const millionsOfYears = timeInSeconds / (1e6 * YEAR);
+        return `${millionsOfYears.toFixed(0)} ${t.time_millions_years}`;
     }
-
-    // 3. Atualização da UI
-    let percentage = Math.min((entropy / MAX_ENTROPY) * 100, 100); 
-
-    text.textContent = `${strengthText} (${entropy} bits)`;
-    bar.style.width = `${percentage}%`;
-    bar.className = `strength-bar ${barClass}`;
-    bar.setAttribute('aria-valuenow', entropy); // Atualiza para acessibilidade
-}
-
-// --- 5. FUNÇÕES DE GERAÇÃO DE SENHA ---
-
-/**
- * Gera uma senha tradicional baseada em caracteres aleatórios.
- * @param {Object} inputs - Objeto contendo os inputs do modo char.
- * @param {HTMLElement} display - O elemento de exibição da senha.
- * @returns {Object} {password: string, charset: string}
- */
-function generateCharacterPassword(inputs, display) {
-    const length = parseInt(inputs.lengthNumber.value, 10);
-    const charSet = getCharSet(inputs);
-
-    // Validação: se o conjunto de caracteres estiver vazio
-    if (charSet.length === 0) {
-        display.value = t.errorSelectChar;
-        return { password: t.errorSelectChar, charset: '' };
-    }
-
-    let passwordArray = [];
-    const charSetLength = charSet.length;
-
-    // Gera a senha caractere por caractere
-    for (let i = 0; i < length; i++) {
-        const randomIndex = getRandomInt(0, charSetLength - 1);
-        passwordArray.push(charSet[randomIndex]);
-    }
-
-    // A senha gerada pode ser embaralhada para garantir máxima aleatoriedade
-    const password = shuffleArray(passwordArray).join('');
-    display.value = password;
-
-    return { password: password, charset: charSet };
 }
 
 /**
- * Gera uma passphrase (senha de palavras) baseada em um dicionário.
- * @param {Object} inputs - Objeto contendo os inputs do modo passphrase.
- * @param {HTMLElement} display - O elemento de exibição da senha.
- * @returns {Object} {password: string, wordPool: string[]}
+ * Atualiza o indicador de força, tempo de quebra e acessibilidade.
+ * @param {HTMLElement} strengthBar - Elemento da barra.
+ * @param {HTMLElement} strengthText - Elemento do texto.
  */
-function generatePassphrase(inputs, display) {
-    const numWords = parseInt(inputs.numWordsNumber.value, 10);
-    const separator = inputs.separator.value || '';
-    const capitalizeWords = inputs.capitalizeWords.checked;
-    const includeDigits = inputs.includePassphraseDigits.checked;
+function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = null, strengthBar, strengthText, charInputs = {}, passphraseInputs = {}) {
+    const capitalizeWords = passphraseInputs.capitalizeWords;
+    const includePassphraseDigits = passphraseInputs.includePassphraseDigits;
     
-    // Usa a lista de palavras ativa (padrão do idioma ou customizada)
-    const wordPool = activeWordList; 
-    
-    // Validação de segurança: Tamanho mínimo do dicionário
-    if (wordPool.length < MIN_WORDS_REQUIRED) {
-        display.value = t.errorInvalidWords;
-        return { password: t.errorInvalidWords, wordPool: [] };
-    }
-
-    let phrase = [];
-    const poolSize = wordPool.length;
-
-    // 1. Seleciona as palavras aleatórias
-    for (let i = 0; i < numWords; i++) {
-        const randomIndex = getRandomInt(0, poolSize - 1);
-        let word = wordPool[randomIndex];
-
-        // 2. Aplica Capitalização
-        if (capitalizeWords) {
-            word = word.charAt(0).toUpperCase() + word.slice(1);
-        }
+    // Obtém a lista efetiva para o cálculo de entropia da Passphrase
+    let effectiveWordList = null;
+    if (mode === 'passphrase') {
+        // Obtém o elemento customDictWarning do objeto passphraseInputs
+        const customDictWarningElement = passphraseInputs.customDictWarning;
         
-        phrase.push(word);
+        // Passa o elemento customDictWarning para a função getEffectiveWordList para que ela atualize o aviso
+        effectiveWordList = getEffectiveWordList(passphraseInputs.customWordlist, customDictWarningElement);
+        charSetSize = effectiveWordList ? effectiveWordList.length : 0;
     }
 
-    // 3. Aplica o Separador
-    let password = phrase.join(separator);
+    const entropy = calculateStrength(
+        password, 
+        mode, 
+        charSetSize, 
+        passphraseArray, 
+        capitalizeWords, 
+        includePassphraseDigits,
+        effectiveWordList 
+    );
+    let strength = "";
+    let width = 0;
+    let className = "";
 
-    // 4. Inclui Dígitos Aleatórios
-    if (includeDigits) {
-        // Gera 1 a 3 dígitos aleatórios
-        const numDigits = getRandomInt(1, 3); 
-        let digits = '';
-        for (let i = 0; i < numDigits; i++) {
-            digits += getRandomInt(0, 9);
-        }
-
-        // Escolhe um ponto aleatório para inserção (entre as palavras ou nas extremidades)
-        const insertionPoints = numWords + 1; 
-        const insertionIndex = getRandomInt(0, insertionPoints - 1);
+    // 1. Lógica de cálculo e classificação
+    if (entropy === 0 || password === t.displayDefault || password.includes(t.errorSelectChar) || password.includes(t.errorInvalidWords)) {
+        strengthBar.style.width = "0%";
+        strengthText.textContent = t.tooShort; 
+        strengthBar.className = `strength-bar`;
         
-        let passwordArray = password.split(separator);
-        
-        // Insere os dígitos como um "item" na posição aleatória
-        passwordArray.splice(insertionIndex, 0, digits); 
-        
-        password = passwordArray.join(separator);
-    }
-    
-    display.value = password;
-
-    return { password: password, wordPool: wordPool };
-}
-
-// --- 6. FUNÇÕES DE UI E EVENTOS ---
-
-/**
- * Função principal para gerar a senha e atualizar a força.
- * Decide qual modo usar e chama a função de geração apropriada.
- * @param {Object} elements - Objeto contendo todos os elementos DOM relevantes.
- */
-function generatePassword(elements) {
-    const { 
-        passwordDisplay, strengthBar, strengthText, charInputs, passphraseInputs,
-        modeChar
-    } = elements;
-
-    // Determina o modo atual
-    currentMode = modeChar.checked ? 'char' : 'passphrase';
-
-    let result = { password: '', charset: '', wordPool: [] };
-    
-    if (currentMode === 'char') {
-        result = generateCharacterPassword(charInputs, passwordDisplay);
-        // Atualiza a força usando o tamanho do charset
-        updateStrengthIndicator(result.password, currentMode, result.charset.length, 0, strengthBar, strengthText, charInputs, passphraseInputs);
-    } else {
-        result = generatePassphrase(passphraseInputs, passwordDisplay);
-        // Atualiza a força usando o tamanho do dicionário
-        updateStrengthIndicator(result.password, currentMode, 0, result.wordPool.length, strengthBar, strengthText, charInputs, passphraseInputs);
-    }
-
-    // Adiciona ao histórico apenas se não for uma mensagem de erro
-    if (result.password !== t.errorSelectChar && result.password !== t.errorInvalidWords) {
-        addToHistory(result.password);
-    }
-}
-
-/**
- * Alterna entre o tema claro e escuro, salva a preferência e atualiza o ícone.
- */
-function toggleTheme() {
-    const body = document.body;
-    const isDarkMode = body.classList.toggle('dark-mode');
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-    document.getElementById('theme-toggle').querySelector('span').textContent = isDarkMode ? '☀️' : '🌙';
-}
-
-/**
- * Copia o texto para a área de transferência e mostra um feedback (botão e toast).
- * @param {string} text - O texto a ser copiado.
- * @param {HTMLElement} button - O botão que acionou a cópia.
- */
-function copyToClipboard(text, button) {
-    navigator.clipboard.writeText(text).then(() => {
-        // Feedback no botão
-        button.textContent = t.copied;
-        button.classList.add('copied');
-        
-        // Retorna ao estado original
-        setTimeout(() => {
-            button.textContent = t.copy;
-            button.classList.remove('copied');
-        }, 1500);
-
-        showToast(t.copiedToast);
-    }).catch(err => {
-        console.error('Erro ao copiar: ', err);
-        showToast(t.errorCopy);
-    });
-}
-
-/**
- * Exibe uma notificação pop-up temporária (toast).
- * @param {string} message - A mensagem a ser exibida.
- */
-function showToast(message) {
-    const toastContainer = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-
-    toastContainer.appendChild(toast);
-    
-    // Força o repaint/reflow para garantir que a transição de entrada funcione
-    void toast.offsetWidth; 
-    toast.classList.add('show');
-
-    // Remove o toast após o tempo definido
-    setTimeout(() => {
-        toast.classList.remove('show');
-        // Remove do DOM após o término da transição de saída
-        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-    }, 3000);
-}
-
-// --- 7. FUNÇÕES DE HISTÓRICO ---
-
-/**
- * Adiciona uma senha gerada à lista do histórico.
- * @param {string} password - A senha gerada.
- */
-function addToHistory(password) {
-    // Adiciona no início
-    generatedPasswords.unshift(password); 
-    if (generatedPasswords.length > MAX_HISTORY) {
-        generatedPasswords.pop(); // Remove o mais antigo se exceder o limite
-    }
-    
-    // Salva no localStorage para persistência na sessão
-    localStorage.setItem('passwordHistory', JSON.stringify(generatedPasswords));
-    
-    renderHistory();
-}
-
-/**
- * Limpa todo o histórico de senhas (lista JS e Local Storage).
- */
-function clearHistory() {
-    generatedPasswords = [];
-    localStorage.removeItem('passwordHistory');
-    renderHistory();
-    showToast(t.historyClearedToast);
-}
-
-/**
- * Renderiza o histórico de senhas na UI.
- */
-function renderHistory() {
-    const list = document.getElementById('password-history-list');
-    const status = document.getElementById('history-status');
-    const historyHeader = document.querySelector('.history-header');
-
-    list.innerHTML = ''; 
-
-    if (generatedPasswords.length === 0) {
-        // Exibe status e oculta o cabeçalho/botão limpar
-        status.textContent = t.historyEmpty;
-        status.style.display = 'block';
-        historyHeader.style.display = 'none'; 
+        // ARIA: Valores de acessibilidade
+        strengthBar.setAttribute('aria-valuenow', 0);
+        strengthBar.setAttribute('aria-valuetext', t.tooShort);
         return;
     }
 
-    // Oculta status e exibe o cabeçalho
-    status.style.display = 'none';
-    historyHeader.style.display = 'flex'; 
+    if (entropy < 40) {
+        strength = t.tooShort; 
+        width = (entropy / 40) * 25; 
+        className = "strength-weak";
+    } else if (entropy < 60) {
+        strength = t.weak; 
+        width = 25 + ((entropy - 40) / 20) * 25; 
+        className = "strength-medium";
+    } else if (entropy < 80) {
+        strength = t.medium; 
+        width = 50 + ((entropy - 60) / 20) * 25; 
+        className = "strength-strong"; 
+    } else if (entropy < 100) {
+        strength = t.strong; 
+        width = 75 + ((entropy - 80) / 20) * 25; 
+        className = "strength-strong"; 
+    } else {
+        strength = t.veryStrong; 
+        width = 100;
+        className = "strength-very-strong";
+    }
+    
+    // 2. Formatação do Tempo de Quebra
+    const breakTime = formatBreakTime(entropy);
 
-    generatedPasswords.forEach(password => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        
-        // Elemento da senha
-        const passText = document.createElement('span');
-        passText.className = 'history-password';
-        passText.textContent = password;
+    // 3. Atualização do DOM e ARIA
+    strengthBar.style.width = Math.min(width, 100).toFixed(2) + "%";
+    strengthBar.className = `strength-bar ${className}`;
+    
+    // Texto aprimorado com entropia e tempo de quebra
+    strengthText.innerHTML = 
+        `${t.strengthLabel} <strong>${strength}</strong> (${entropy.toFixed(1)} bits)<br>` +
+        `${t.breakTimeLabel} <strong>${breakTime}</strong>`;
 
-        // Botão Copiar
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'history-copy-btn';
-        copyBtn.textContent = t.copy;
-        copyBtn.title = t.copyHistoryTitle;
+    // ARIA: Configuração de acessibilidade para a barra
+    strengthBar.setAttribute('role', 'progressbar');
+    strengthBar.setAttribute('aria-valuenow', entropy.toFixed(1));
+    strengthBar.setAttribute('aria-valuemin', 0);
+    strengthBar.setAttribute('aria-valuemax', 128); // Um valor de referência alto
+    strengthBar.setAttribute('aria-valuetext', `${strength}: ${breakTime}`);
+}
 
-        // Listener de cópia
-        copyBtn.addEventListener('click', () => {
-            copyToClipboard(password, copyBtn);
-        });
 
-        item.appendChild(passText);
-        item.appendChild(copyBtn);
-        list.appendChild(item);
-    });
+// --- 5. LÓGICA DE GERAÇÃO (Usa referências de closure) ---
+
+function removeAmbiguous(charSet) {
+    const regex = new RegExp('[' + charSets.ambiguous.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ']', 'g');
+    return charSet.replace(regex, '');
 }
 
 /**
- * Carrega o histórico salvo no localStorage ao iniciar.
+ * @param {Object} inputs - Objeto contendo todas as referências de input de Caracteres.
  */
-function loadHistory() {
-    const savedHistory = localStorage.getItem('passwordHistory');
-    if (savedHistory) {
-        try {
-            generatedPasswords = JSON.parse(savedHistory);
-        } catch (e) {
-            console.error('Erro ao carregar histórico: ', e);
-            generatedPasswords = [];
-        }
+function generateCharacterPassword(inputs, strengthInputs) {
+    const { passwordDisplay, lengthNumberInput, excludeAmbiguous, 
+             includeUppercase, includeLowercase, includeNumbers, includeSymbols, includeAccentedChars } = inputs;
+    
+    const length = parseInt(lengthNumberInput.value);
+    const isAmbiguousExcluded = excludeAmbiguous.checked;
+
+    let allChars = "";
+    let password = "";
+    let requiredChars = []; 
+    
+    const processCharSet = (charSet) => isAmbiguousExcluded ? removeAmbiguous(charSet) : charSet;
+
+    // 1. Constrói o conjunto
+    if (includeUppercase.checked) { const chars = processCharSet(charSets.uppercase); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeLowercase.checked) { const chars = processCharSet(charSets.lowercase); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeNumbers.checked) { const chars = processCharSet(charSets.numbers); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeSymbols.checked) { const chars = processCharSet(charSets.symbols); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    if (includeAccentedChars.checked) { const chars = processCharSet(charSets.accented); if(chars.length > 0) { allChars += chars; requiredChars.push(chars); } }
+    
+    // 2. VALIDAÇÃO
+    if (allChars.length === 0) {
+        passwordDisplay.value = t.errorSelectChar; 
+        updateStrengthIndicator("", 'char', 0, null, strengthInputs.strengthBar, strengthInputs.strengthText);
+        return;
     }
+    
+    // 3. Garante que os obrigatórios sejam incluídos
+    for (const charSet of requiredChars) {
+        password += charSet[getRandomSecureIndex(charSet.length)];
+    }
+    
+    // 4. Preenche e evita repetição trivial
+    const remainingLength = length - requiredChars.length;
+    let lastChar = password.slice(-1); 
+    
+    for (let i = 0; i < remainingLength; i++) {
+        let newChar;
+        let attempts = 0;
+        do {
+            newChar = allChars[getRandomSecureIndex(allChars.length)];
+            attempts++;
+            if (allChars.length === 1 && attempts > 1) break; 
+        } while (newChar === lastChar); 
+        password += newChar;
+        lastChar = newChar; 
+    }
+
+    // 5. Embaralha
+    password = secureShuffle(password);
+    
+    passwordDisplay.value = password;
+    updateStrengthIndicator(password, 'char', allChars.length, null, strengthInputs.strengthBar, strengthInputs.strengthText, inputs, strengthInputs.passphraseInputs);
+    saveToHistory(password);
+}
+
+/**
+ * @param {Object} inputs - Objeto contendo todas as referências de input de Passphrase.
+ */
+function generatePassphrase(inputs, strengthInputs) {
+    const { passwordDisplay, numWordsNumberInput, separatorInput, capitalizeWords, includePassphraseDigits, customWordlist, customDictWarning } = inputs;
+
+    const numWords = parseInt(numWordsNumberInput.value); 
+    
+    // 🚨 ATUALIZAÇÃO: Sanitização e imposição de separador seguro
+    let separator = separatorInput.value.trim();
+    const defaultSeparator = '-';
+
+    if (separator === '') {
+        separator = defaultSeparator;
+        // Atualiza o campo de input e salva as configurações para dar feedback ao usuário
+        separatorInput.value = separator; 
+        savePassphraseSettings(inputs); 
+    }
+    
+    const doCapitalize = capitalizeWords.checked;
+    const doIncludeDigits = includePassphraseDigits.checked;
+    
+    // Obtém a lista de palavras que será utilizada (customizada ou Diceware)
+    const effectiveWordList = getEffectiveWordList(customWordlist, customDictWarning);
+
+    let passphraseArray = [];
+
+    // 1. VALIDAÇÃO
+    if (!effectiveWordList || numWords < 3 || numWords > 10 || effectiveWordList.length === 0) { 
+        passwordDisplay.value = t.errorInvalidWords; 
+        updateStrengthIndicator("", 'passphrase', 0, null, strengthInputs.strengthBar, strengthInputs.strengthText);
+        return;
+    }
+    
+    // 2. Gera as palavras usando a lista efetiva
+    for (let i = 0; i < numWords; i++) {
+        let word = effectiveWordList[getRandomSecureIndex(effectiveWordList.length)];
+        if (doCapitalize) {
+            word = capitalizeFirstLetter(word);
+        }
+        passphraseArray.push(word);
+    }
+    
+    // 3. Inclui o dígito
+    if (doIncludeDigits) {
+        const numDigits = getRandomSecureIndex(3) + 1; 
+        const maxNumber = 10**numDigits - 1; 
+        const digit = getRandomSecureIndex(maxNumber + 1); 
+        const digitString = String(digit).padStart(numDigits, '0'); 
+        const insertIndex = getRandomSecureIndex(passphraseArray.length + 1); 
+        passphraseArray.splice(insertIndex, 0, digitString);
+    }
+
+    // 4. Junta
+    const finalPassphrase = passphraseArray.join(separator);
+    
+    passwordDisplay.value = finalPassphrase;
+    // 5. Atualiza a força usando a lista EFETIVA
+    updateStrengthIndicator(finalPassphrase, 'passphrase', effectiveWordList.length, passphraseArray, strengthInputs.strengthBar, strengthInputs.strengthText, strengthInputs.charInputs, inputs);
+    saveToHistory(finalPassphrase);
+}
+
+/**
+ * Função principal, chama a geração correta.
+ * @param {Object} elements - Todas as referências de elementos.
+ */
+function generatePassword(elements) {
+    const { copyButton, passwordDisplay, modePassphrase, charInputs, passphraseInputs, strengthInputs } = elements;
+    
+    copyButton.textContent = t.copy; 
+    copyButton.classList.remove('copied');
+    
+    if (passwordDisplay.value === "" || passwordDisplay.value.includes("Clique em GERAR") || passwordDisplay.value.includes("Select")) {
+        passwordDisplay.value = "";
+    }
+
+    if (modePassphrase.checked) {
+        generatePassphrase(passphraseInputs, strengthInputs);
+    } else {
+        generateCharacterPassword(charInputs, strengthInputs);
+    }
+}
+
+
+// --- 6. LÓGICA DE SINCRONIZAÇÃO E MODO ---
+
+function syncLengthInputs(source, lengthRangeInput, lengthNumberInput) {
+    const value = source.value;
+    const min = parseInt(lengthNumberInput.min);
+    const max = parseInt(lengthNumberInput.max);
+    const safeValue = Math.min(Math.max(parseInt(value) || min, min), max);
+
+    if (source === lengthRangeInput) {
+        lengthNumberInput.value = safeValue;
+    } else {
+        lengthRangeInput.value = safeValue;
+    }
+}
+
+function syncNumWordsInputs(source, numWordsRangeInput, numWordsNumberInput) {
+    const value = source.value;
+    const min = parseInt(numWordsNumberInput.min);
+    const max = parseInt(numWordsNumberInput.max);
+    const safeValue = Math.min(Math.max(parseInt(value) || min, min), max);
+
+    if (source === numWordsRangeInput) {
+        numWordsNumberInput.value = safeValue;
+    } else {
+        numWordsNumberInput.value = safeValue;
+    }
+}
+
+/**
+ * Alterna entre os modos de exibição de configurações (Character vs. Passphrase).
+ * @param {Object} elements - Todas as referências de elementos.
+ */
+function switchMode(elements) {
+    const { modePassphrase, charSettingsDiv, passphraseSettingsDiv, generateButton } = elements;
+    
+    const isPassphraseMode = modePassphrase.checked;
+    
+    charSettingsDiv.style.display = isPassphraseMode ? 'none' : 'block';
+    passphraseSettingsDiv.style.display = isPassphraseMode ? 'block' : 'none';
+    
+    generateButton.textContent = t.generateButton;
+    
+    currentMode = isPassphraseMode ? 'passphrase' : 'char';
+    
+    // 🔑 NOVO: Salva o modo atual
+    localStorage.setItem('generatorMode', currentMode);
+
+    // Chama a geração para que o indicador de força atualize corretamente
+    generatePassword(elements);
+}
+
+
+// --- 7. HISTÓRICO, COPIAR E TOAST (Acessa o DOM via closure ou getElementById pontual) ---
+
+function saveToHistory(password) {
+    if (!password || password.includes(t.displayDefault) || password.includes(t.errorSelectChar) || password.includes(t.errorInvalidWords)) return; 
+    let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
+    if (history.length === 0 || history[history.length - 1] !== password) {
+        history.push(password);
+    }
+    if (history.length > MAX_HISTORY) {
+        history.shift(); 
+    }
+    sessionStorage.setItem('passwordHistory', JSON.stringify(history));
     renderHistory();
 }
 
-// --- 8. FUNÇÕES DE INTERNACIONALIZAÇÃO (i18n) E TEMA ---
+function renderHistory() {
+    const historyList = document.getElementById('password-history-list');
+    const historyStatus = document.getElementById('history-status');
+    const clearHistoryButton = document.getElementById('clear-history-button');
+
+    // Segurança: se os elementos não existirem, aborta.
+    if (!historyList || !historyStatus || !clearHistoryButton) return; 
+
+    let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
+    historyList.innerHTML = ''; 
+    
+    if (history.length === 0) {
+        historyStatus.textContent = t.historyEmpty; 
+        historyStatus.style.display = 'block';
+        clearHistoryButton.style.display = 'none';
+        return;
+    }
+    historyStatus.style.display = 'none';
+    clearHistoryButton.style.display = 'inline-block';
+
+    history.slice().reverse().forEach((pwd) => {
+        const item = document.createElement('div');
+        item.classList.add('history-item');
+        // 💡 Ajuste: Usando t.copy em vez de t.historyPasswordCopied no botão inicial.
+        item.innerHTML = `
+            <span class="history-password">${pwd}</span>
+            <button class="history-copy-btn" data-password="${pwd}">${t.copy}</button>
+        `;
+        historyList.appendChild(item);
+    });
+
+    document.querySelectorAll('.history-copy-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const pwdToCopy = e.target.getAttribute('data-password');
+            navigator.clipboard.writeText(pwdToCopy);
+            e.target.textContent = t.historyPasswordCopied; 
+            setTimeout(() => { e.target.textContent = t.copy; }, 1500);
+        });
+    });
+}
+
+function clearHistory() {
+    sessionStorage.removeItem('passwordHistory');
+    renderHistory(); 
+    showToast(t.historyClear); 
+}
+
+function showToast(message) {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return; // Aborta se o container não existe
+    
+    const toast = document.createElement('div');
+    toast.classList.add('toast');
+    toast.textContent = message;
+
+    toastContainer.appendChild(toast);
+    void toast.offsetWidth;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => {
+            toast.remove();
+        });
+    }, 3000);
+}
+
+function copyToClipboard(text, copyButton) {
+    navigator.clipboard.writeText(text).then(() => {
+        copyButton.textContent = t.copied; 
+        copyButton.classList.add('copied');
+        showToast(t.copied); 
+        setTimeout(() => {
+            copyButton.textContent = t.copy; 
+            copyButton.classList.remove('copied');
+        }, 1500);
+    });
+}
+
+
+// --- 8. LÓGICA DE TEMA SIMPLIFICADA 🌙☀️ ---
+
+function setTheme(theme) {
+    document.body.classList.toggle('dark-mode', theme === 'dark');
+    localStorage.setItem('theme', theme);
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.contains('dark-mode');
+    setTheme(isDark ? 'light' : 'dark'); 
+}
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme') || 
+                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(savedTheme);
+}
+
+
+// --- 9. LÓGICA DE INTERNACIONALIZAÇÃO (i18n) e PERSISTÊNCIA ---
 
 /**
- * Aplica as strings de tradução ao HTML com base nos atributos data-i18n.
- * @param {string} lang - O código do idioma (ex: 'pt-br').
- * @param {Object} elements - Objeto contendo os elementos DOM relevantes.
+ * Aplica as traduções baseadas no idioma ativo.
  */
 function applyTranslations(lang, elements) {
-    // Define o objeto de tradução ativo (variável global t)
-    t = translations[lang]; 
-    if (!t) return;
-
-    // Itera sobre todos os elementos com data-i18n
+    if (!translations[lang] || !wordLists[lang]) {
+        console.error(`Traduções ou listas de palavras para o idioma ${lang} não encontradas.`);
+        return;
+    }
+    t = translations[lang];
+    activeWordList = wordLists[lang];
+    
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (t[key]) {
-            // Lógica específica para diferentes tipos de tags/atributos
-            if (el.tagName === 'TITLE') {
-                el.textContent = t[key];
-            } else if (el.tagName === 'INPUT' && el.type === 'text') {
-                el.placeholder = t[key];
-            } else {
-                el.textContent = t[key];
+        let text = t[key] || el.textContent;
+
+        if (text && text.includes('**')) {
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            el.innerHTML = text;
+        } else if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'number')) {
+            if (key === 'displayDefault') {
+                el.setAttribute('placeholder', text);
             }
+        } else if (el.tagName === 'TEXTAREA') {
+            if (key === 'customDictPlaceholder') {
+                el.setAttribute('placeholder', text);
+            }
+        } else {
+            el.textContent = text;
         }
     });
 
-    // Atualiza textos específicos (títulos, placeholders, etc.)
-    document.getElementById('generate-button').textContent = t.generate;
-    document.getElementById('password-display').placeholder = t.displayDefault;
-    document.getElementById('copy-button').title = t.copyTitle;
-    document.getElementById('clear-history-button').title = t.clearHistoryTitle;
-
-    // Re-renderiza o histórico para traduzir o status
-    renderHistory();
-
-    // Atualiza a lista de palavras ativas para o modo Passphrase
-    activeWordList = (wordLists && wordLists[lang]) ? wordLists[lang] : [];
-
-    // Garante que o indicador de força reflita a mudança de idioma/lista de palavras
-    updateStrengthIndicator(elements.passwordDisplay.value, currentMode, 
-        elements.charInputs.getCharSet(elements.charInputs).length, 
-        activeWordList.length, 
-        elements.strengthBar, elements.strengthText, elements.charInputs, elements.passphraseInputs
-    );
-}
-
-/**
- * Altera o idioma da aplicação e salva a preferência.
- * @param {string} lang - O novo idioma.
- * @param {Object} elements - Objeto contendo os elementos DOM relevantes.
- */
-function switchLanguage(lang, elements) {
-    currentLang = lang;
-    localStorage.setItem('language', lang);
-    applyTranslations(lang, elements);
-    // Força a regeneração para atualizar a senha/placeholder com o novo idioma
-    generatePassword(elements); 
-}
-
-/**
- * Carrega a preferência de tema do usuário ao iniciar (Claro/Escuro).
- */
-function loadThemePreference() {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('theme-toggle').querySelector('span').textContent = '☀️';
-    } else {
-        document.body.classList.remove('dark-mode');
-        document.getElementById('theme-toggle').querySelector('span').textContent = '🌙';
+    document.title = t.title;
+    
+    // Atualiza o display padrão
+    if (elements.passwordDisplay.value === "" || elements.passwordDisplay.value.includes("Clique em GERAR") || elements.passwordDisplay.value.includes("Select")) {
+        elements.passwordDisplay.value = t.displayDefault;
     }
+
+    // Garante que o texto do botão de Gerar e Força seja atualizado
+    // switchMode é chamado aqui, o que por sua vez chama generatePassword, atualizando a força.
+    switchMode(elements); 
+    
+    renderHistory();
 }
 
-// --- 9. FUNÇÕES DE PERSISTÊNCIA E MODO (Local Storage) ---
-
 /**
- * Salva as configurações do modo Caractere no Local Storage.
- * @param {Object} inputs - Objeto contendo os inputs do modo char.
+ * Função para trocar o idioma e persistir a escolha.
  */
+function switchLanguage(newLang, elements) {
+    localStorage.setItem('language', newLang);
+    currentLang = newLang; // Atualiza a variável de estado
+    applyTranslations(newLang, elements);
+}
+
+// 🔑 NOVO: FUNÇÃO PARA CARREGAR CONFIGURAÇÕES
+function loadSettings(elements) {
+    // Busca as configurações do localStorage. Usa um objeto vazio como fallback.
+    const charSettings = JSON.parse(localStorage.getItem('charSettings') || '{}');
+    const passphraseSettings = JSON.parse(localStorage.getItem('passphraseSettings') || '{}');
+    const mode = localStorage.getItem('generatorMode') || 'char';
+
+    // 1. Carrega Modo
+    if (mode === 'passphrase') {
+        elements.modePassphrase.checked = true;
+    } else {
+        elements.modeChar.checked = true;
+    }
+
+    // 2. Carrega Configurações de Caracteres
+    // Usa valores padrão (12 e true) se não houver no storage.
+    elements.lengthNumberInput.value = charSettings.length || 12;
+    elements.lengthRangeInput.value = charSettings.length || 12;
+
+    // Nota: Checkboxes devem ter um fallback explícito para true ou false.
+    // O operador || pode não funcionar bem para booleanos armazenados como false.
+    elements.charInputs.includeUppercase.checked = charSettings.includeUppercase !== false;
+    elements.charInputs.includeLowercase.checked = charSettings.includeLowercase !== false;
+    elements.charInputs.includeNumbers.checked = charSettings.includeNumbers !== false;
+    elements.charInputs.includeSymbols.checked = charSettings.includeSymbols || false;
+    elements.charInputs.includeAccentedChars.checked = charSettings.includeAccentedChars || false;
+    elements.charInputs.excludeAmbiguous.checked = charSettings.excludeAmbiguous || false;
+    
+    // 3. Carrega Configurações de Passphrase
+    // Usa valores padrão (4 e '-') se não houver no storage.
+    elements.numWordsNumberInput.value = passphraseSettings.numWords || 4;
+    elements.numWordsRangeInput.value = passphraseSettings.numWords || 4;
+    
+    // Garante que o separador não seja vazio no carregamento
+    elements.passphraseInputs.separatorInput.value = passphraseSettings.separator && passphraseSettings.separator.trim() !== '' ? passphraseSettings.separator : '-';
+    elements.passphraseInputs.capitalizeWords.checked = passphraseSettings.capitalizeWords || false;
+    elements.passphraseInputs.includePassphraseDigits.checked = passphraseSettings.includePassphraseDigits !== false;
+
+    // Carrega Dicionário Personalizado
+    elements.passphraseInputs.customWordlist.value = passphraseSettings.customWordlist || '';
+}
+
+// 🔑 NOVO: FUNÇÃO PARA SALVAR CONFIGURAÇÕES DE CARACTERE
 function saveCharSettings(inputs) {
     const settings = {
-        length: inputs.lengthNumber.value,
-        uppercase: inputs.includeUppercase.checked,
-        // ... (outros checkboxes)
-        lowercase: inputs.includeLowercase.checked,
-        numbers: inputs.includeNumbers.checked,
-        symbols: inputs.includeSymbols.checked,
-        accented: inputs.includeAccentedChars.checked,
-        ambiguous: inputs.excludeAmbiguous.checked
+        length: parseInt(inputs.lengthNumberInput.value),
+        includeUppercase: inputs.includeUppercase.checked,
+        includeLowercase: inputs.includeLowercase.checked, 
+        includeNumbers: inputs.includeNumbers.checked,
+        includeSymbols: inputs.includeSymbols.checked,
+        includeAccentedChars: inputs.includeAccentedChars.checked,
+        excludeAmbiguous: inputs.excludeAmbiguous.checked,
     };
     localStorage.setItem('charSettings', JSON.stringify(settings));
 }
 
-/**
- * Carrega as configurações do modo Caractere do Local Storage.
- * @param {Object} inputs - Objeto contendo os inputs do modo char.
- */
-function loadCharSettings(inputs) {
-    const savedSettings = localStorage.getItem('charSettings');
-    if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        // Aplica os valores salvos
-        inputs.lengthNumber.value = settings.length;
-        inputs.lengthRange.value = settings.length;
-        inputs.includeUppercase.checked = settings.uppercase;
-        inputs.includeLowercase.checked = settings.lowercase;
-        inputs.includeNumbers.checked = settings.numbers;
-        inputs.includeSymbols.checked = settings.symbols;
-        inputs.includeAccentedChars.checked = settings.accented;
-        inputs.excludeAmbiguous.checked = settings.ambiguous;
-    }
-}
-
-/**
- * Salva as configurações do modo Passphrase no Local Storage.
- * @param {Object} inputs - Objeto contendo os inputs do modo passphrase.
- */
+// 🔑 NOVO: FUNÇÃO PARA SALVAR CONFIGURAÇÕES DE PASSPHRASE
 function savePassphraseSettings(inputs) {
+    // 💡 Sanitiza o separador antes de salvar
+    let separatorValue = inputs.separatorInput.value.trim();
+    if (separatorValue === '') {
+        separatorValue = '-';
+        inputs.separatorInput.value = separatorValue; // Atualiza o input para persistir o visual
+    }
+    
     const settings = {
-        numWords: inputs.numWordsNumber.value,
-        separator: inputs.separator.value,
-        capitalize: inputs.capitalizeWords.checked,
-        includeDigits: inputs.includePassphraseDigits.checked,
-        customWordlist: inputs.customWordlist.value 
+        numWords: parseInt(inputs.numWordsNumberInput.value),
+        separator: separatorValue,
+        capitalizeWords: inputs.capitalizeWords.checked,
+        includePassphraseDigits: inputs.includePassphraseDigits.checked,
+        customWordlist: inputs.customWordlist.value // Salva o conteúdo do textarea
     };
     localStorage.setItem('passphraseSettings', JSON.stringify(settings));
 }
 
-/**
- * Carrega as configurações do modo Passphrase e valida a lista de palavras customizada.
- * @param {Object} inputs - Objeto contendo os inputs do modo passphrase.
- */
-function loadPassphraseSettings(inputs) {
-    const savedSettings = localStorage.getItem('passphraseSettings');
-    if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        inputs.numWordsNumber.value = settings.numWords;
-        inputs.numWordsRange.value = settings.numWords;
-        inputs.separator.value = settings.separator;
-        inputs.capitalizeWords.checked = settings.capitalize;
-        inputs.includePassphraseDigits.checked = settings.includeDigits;
-        inputs.customWordlist.value = settings.customWordlist;
-    }
-    
-    // Valida a lista customizada ao carregar
-    validateCustomWordlist(inputs);
-}
 
-/**
- * Valida a lista de palavras customizada. Se for válida, ela se torna a 'activeWordList'.
- * Caso contrário, reverte para a lista padrão do idioma e exibe um alerta.
- * @param {Object} inputs - Objeto contendo os inputs do modo passphrase.
- */
-function validateCustomWordlist(inputs) {
-    const listText = inputs.customWordlist.value.trim();
-    const alertEl = document.getElementById('custom-dict-alert');
-    
-    // 1. Reverte para a lista padrão (do idioma)
-    activeWordList = (wordLists && wordLists[currentLang]) ? wordLists[currentLang] : [];
-    alertEl.style.display = 'none';
+// --- 10. INICIALIZAÇÃO E OUVINTES DE EVENTOS (Listeners) ---
 
-    if (listText === '') {
-        return; 
-    }
-
-    // 2. Processa a lista customizada (quebra de linha/espaço, filtra vazios e remove duplicatas)
-    const customList = listText.split(/[\n\s]+/)
-                               .filter(word => word.length > 0)
-                               .filter((value, index, self) => self.indexOf(value) === index); 
-
-    // 3. Validação de segurança: Tamanho mínimo de palavras
-    if (customList.length < MIN_WORDS_REQUIRED) {
-        alertEl.textContent = t.errorDictTooSmall.replace('{minWords}', MIN_WORDS_REQUIRED);
-        alertEl.style.display = 'block';
-        // Mantém a lista padrão ativa, pois a customizada é insegura
-        return;
-    }
-
-    // 4. Se for válida e grande o suficiente, a lista customizada se torna a lista ativa
-    activeWordList = customList;
-    alertEl.textContent = t.successDictUsed.replace('{count}', customList.length);
-    alertEl.style.display = 'block';
-}
-
-
-/**
- * Troca a visualização entre as configurações de caractere e passphrase.
- * @param {string} mode - O novo modo ('char' ou 'passphrase').
- * @param {Object} elements - Objeto contendo os elementos DOM relevantes.
- */
-function switchMode(mode, elements) {
-    const charSettings = document.getElementById('char-settings');
-    const passphraseSettings = document.getElementById('passphrase-settings');
-    currentMode = mode;
-    
-    if (mode === 'char') {
-        charSettings.style.display = 'block';
-        passphraseSettings.style.display = 'none';
-        loadCharSettings(elements.charInputs); 
-    } else {
-        charSettings.style.display = 'none';
-        passphraseSettings.style.display = 'block';
-        loadPassphraseSettings(elements.passphraseInputs);
-    }
-    
-    localStorage.setItem('currentMode', mode);
-    
-    // Força a geração da senha para atualizar o display e a força
-    generatePassword(elements);
-}
-
-// --- 10. INICIALIZAÇÃO DA APLICAÇÃO ---
-
-/**
- * Inicializa a aplicação após o carregamento do DOM.
- */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Mapeamento de Elementos DOM para fácil acesso
-    const elements = {
-        // Display & Força
-        passwordDisplay: document.getElementById('password-display'),
-        copyButton: document.getElementById('copy-button'),
-        strengthBar: document.getElementById('strength-bar'),
-        strengthText: document.getElementById('strength-text'),
-        generateButton: document.getElementById('generate-button'),
-        
-        // Controles Globais
-        themeToggle: document.getElementById('theme-toggle'),
-        languageSelect: document.getElementById('language-select'),
-        
-        // Modos
-        modeChar: document.getElementById('mode-char'),
-        modePassphrase: document.getElementById('mode-passphrase'),
-        
-        // Histórico
-        clearHistoryButton: document.getElementById('clear-history-button'),
+    // 1. 🎯 REUNIÃO DE TODAS AS REFERÊNCIAS DO DOM
+    
+    // Elementos de Entrada/Saída
+    const passwordDisplay = document.getElementById('password-display');
+    const generateButton = document.getElementById('generate-button');
+    const copyButton = document.getElementById('copy-button');
 
-        // Inputs do Modo Caractere (agrupados)
-        charInputs: {
-            lengthRange: document.getElementById('length-range'),
-            lengthNumber: document.getElementById('length-number'),
-            includeUppercase: document.getElementById('include-uppercase'),
-            includeLowercase: document.getElementById('include-lowercase'),
-            includeNumbers: document.getElementById('include-numbers'),
-            includeSymbols: document.getElementById('include-symbols'),
-            includeAccentedChars: document.getElementById('include-accented-chars'),
-            excludeAmbiguous: document.getElementById('exclude-ambiguous'),
-            getCharSet: getCharSet // Inclui a função utilitária
-        },
-        
-        // Inputs do Modo Passphrase (agrupados)
-        passphraseInputs: {
-            numWordsRange: document.getElementById('num-words-range'),
-            numWordsNumber: document.getElementById('num-words-number'),
-            separator: document.getElementById('separator'),
-            capitalizeWords: document.getElementById('capitalize-words'),
-            includePassphraseDigits: document.getElementById('include-passphrase-digits'),
-            customWordlist: document.getElementById('custom-wordlist'),
-        }
+    // Range Sliders
+    const lengthRangeInput = document.getElementById('length-range'); 
+    const lengthNumberInput = document.getElementById('length-number');
+    const numWordsRangeInput = document.getElementById('num-words-range');
+    const numWordsNumberInput = document.getElementById('num-words-number');
+
+    // Checkboxes de Caracteres
+    const includeUppercase = document.getElementById('include-uppercase');
+    const includeLowercase = document.getElementById('include-lowercase');
+    const includeNumbers = document.getElementById('include-numbers');
+    const includeSymbols = document.getElementById('include-symbols');
+    const includeAccentedChars = document.getElementById('include-accented-chars');
+    const excludeAmbiguous = document.getElementById('exclude-ambiguous');
+
+    // Elementos de Configuração de Modo
+    const modeChar = document.getElementById('mode-char');
+    const modePassphrase = document.getElementById('mode-passphrase');
+    const charSettingsDiv = document.getElementById('char-settings');
+    const passphraseSettingsDiv = document.getElementById('passphrase-settings');
+
+    // Configurações de Passphrase
+    const separatorInput = document.getElementById('separator');
+    const capitalizeWords = document.getElementById('capitalize-words');
+    const includePassphraseDigits = document.getElementById('include-passphrase-digits');
+    
+    // Dicionário Personalizado
+    // 💡 customDictWarning deve ser o ID do elemento de alerta, que foi alterado no index.html.
+    const customWordlist = document.getElementById('custom-wordlist');
+    const customDictWarning = document.getElementById('custom-dict-alert'); 
+
+    // Indicador de Força
+    const strengthBar = document.getElementById('strength-bar');
+    const strengthText = document.getElementById('strength-text');
+
+    // Tema
+    const themeToggle = document.getElementById('theme-toggle');
+
+    // Histórico
+    const clearHistoryButton = document.getElementById('clear-history-button');
+
+    // Seletor de Idioma
+    const languageSelect = document.getElementById('language-select');
+
+    // 2. 💡 Organiza as referências em objetos
+    // Inclui lengthRangeInput e numWordsRangeInput para as funções de salvar.
+    const charInputs = { 
+        passwordDisplay, lengthNumberInput, lengthRangeInput,
+        excludeAmbiguous, includeUppercase, includeLowercase, 
+        includeNumbers, includeSymbols, includeAccentedChars 
     };
     
-    const { 
-        passwordDisplay, strengthBar, strengthText, generateButton, copyButton, themeToggle, languageSelect,
-        modeChar, modePassphrase, charInputs, passphraseInputs, clearHistoryButton
-    } = elements;
+    const passphraseInputs = { 
+        passwordDisplay, numWordsNumberInput, numWordsRangeInput,
+        separatorInput, capitalizeWords, includePassphraseDigits, 
+        customWordlist, customDictWarning
+    };
+    
+    const strengthInputs = { strengthBar, strengthText, charInputs, passphraseInputs }; 
+    
+    const elements = { 
+        passwordDisplay, generateButton, copyButton, modeChar, modePassphrase, 
+        charSettingsDiv, passphraseSettingsDiv, languageSelect, themeToggle, 
+        lengthRangeInput, lengthNumberInput, numWordsRangeInput, numWordsNumberInput,
+        charInputs, passphraseInputs, strengthInputs
+    };
 
-    // 2. Carregamento de Preferências e Estado Inicial
+    // 3. Inicialização
+    loadTheme();
     
-    loadThemePreference(); // Carrega tema
-    loadHistory(); // Carrega histórico
-    loadCharSettings(charInputs); // Carrega configurações de caractere
-    loadPassphraseSettings(passphraseInputs); // Carrega configurações de passphrase
+    // 🔑 NOVO: Carrega as configurações ANTES de aplicar as traduções e o modo
+    loadSettings(elements); 
     
-    // Seta o idioma salvo e aplica as traduções
-    languageSelect.value = currentLang;
-    applyTranslations(currentLang, elements); 
+    languageSelect.value = currentLang; 
+    applyTranslations(currentLang, elements);
     
-    // Carrega o modo salvo ou usa o padrão 'char'
-    const savedMode = localStorage.getItem('currentMode') || 'char'; 
-    if (savedMode === 'passphrase') {
-        modePassphrase.checked = true;
-    } else {
-        modeChar.checked = true;
-    }
+    // 4. OUVINTES DE EVENTOS (Listeners)
     
-    // Aplica o modo e gera a primeira senha para preencher o display
-    switchMode(savedMode, elements);
+    // Modo (Caracteres/Passphrase)
+    modeChar.addEventListener('change', () => switchMode(elements));
+    modePassphrase.addEventListener('change', () => switchMode(elements));
 
-
-    // 3. Listeners de Configuração (Modo Caractere)
-    
-    // 3.1. Sincroniza Range e Number (Comprimento)
-    charInputs.lengthRange.addEventListener('input', () => {
-        charInputs.lengthNumber.value = charInputs.lengthRange.value;
-        saveCharSettings(charInputs);
-        generatePassword(elements);
+    // Comprimento/Número de Palavras
+    lengthRangeInput.addEventListener('input', () => { 
+        syncLengthInputs(lengthRangeInput, lengthRangeInput, lengthNumberInput); 
+        saveCharSettings(charInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
+        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
-    charInputs.lengthNumber.addEventListener('input', () => {
-        // Lógica de validação e sincronização inversa
-        let value = parseInt(charInputs.lengthNumber.value, 10);
-        if (value < 6) value = 6;
-        if (value > 64) value = 64;
-        charInputs.lengthRange.value = value;
-        charInputs.lengthNumber.value = value;
-        saveCharSettings(charInputs);
-        generatePassword(elements);
+    lengthNumberInput.addEventListener('input', () => { 
+        syncLengthInputs(lengthNumberInput, lengthRangeInput, lengthNumberInput); 
+        saveCharSettings(charInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
+        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
-    
-    // 3.2. Listeners para Checkboxes
-    Object.values(charInputs).forEach(input => {
-        if (input.type === 'checkbox') {
-            input.addEventListener('change', () => {
-                saveCharSettings(charInputs);
-                generatePassword(elements);
-            });
-        }
+    numWordsRangeInput.addEventListener('input', () => { 
+        syncNumWordsInputs(numWordsRangeInput, numWordsRangeInput, numWordsNumberInput); 
+        savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
+        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
-
-    // 4. Listeners de Configuração (Modo Passphrase)
-    
-    // 4.1. Sincroniza Range e Number (Número de Palavras)
-    passphraseInputs.numWordsRange.addEventListener('input', () => {
-        passphraseInputs.numWordsNumber.value = passphraseInputs.numWordsRange.value;
-        savePassphraseSettings(passphraseInputs);
-        generatePassword(elements);
-    });
-    passphraseInputs.numWordsNumber.addEventListener('input', () => {
-        // Lógica de validação e sincronização inversa
-        let value = parseInt(passphraseInputs.numWordsNumber.value, 10);
-        if (value < 3) value = 3;
-        if (value > 10) value = 10;
-        passphraseInputs.numWordsRange.value = value;
-        passphraseInputs.numWordsNumber.value = value;
-        savePassphraseSettings(passphraseInputs);
-        generatePassword(elements);
+    numWordsNumberInput.addEventListener('input', () => { 
+        syncNumWordsInputs(numWordsNumberInput, numWordsRangeInput, numWordsNumberInput); 
+        savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
+        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     
-    // 4.2. Listeners para Inputs e Checkboxes
-    [passphraseInputs.separator, passphraseInputs.capitalizeWords, passphraseInputs.includePassphraseDigits].forEach(input => {
+    // 4.1. Listeners de Caracteres (Salvar e Recalcular Força)
+    [includeUppercase, includeLowercase, includeNumbers, includeSymbols, includeAccentedChars, excludeAmbiguous].forEach(input => {
         input.addEventListener('change', () => {
-            savePassphraseSettings(passphraseInputs);
-            generatePassword(elements);
+            saveCharSettings(charInputs);
+            updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
         });
     });
 
-    // 4.3. Listener para a Troca de Modo (Radio Buttons)
-    modeChar.addEventListener('change', () => switchMode('char', elements));
-    modePassphrase.addEventListener('change', () => switchMode('passphrase', elements));
-
-    // 4.4. Listener para a Lista Customizada (Validação e Força)
-    passphraseInputs.customWordlist.addEventListener('input', () => {
-        savePassphraseSettings(passphraseInputs);
-        validateCustomWordlist(passphraseInputs);
-        // Recalcula a força imediatamente, pois a mudança na lista altera a entropia
-        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, activeWordList.length, strengthBar, strengthText, charInputs, passphraseInputs);
+    // 4.2. Listeners de Passphrase (Salvar e Recalcular Força)
+    [separatorInput, capitalizeWords, includePassphraseDigits].forEach(input => {
+        input.addEventListener('change', () => {
+            savePassphraseSettings(passphraseInputs);
+            // O updateStrengthIndicator será chamado via generatePassword, 
+            // que é chamado por switchMode (se o modo mudar) ou pelo generateButton. 
+            // Aqui, apenas salvamos. A mudança de input no Passphrase mode não recalcula
+            // a força da senha *atual*, apenas garante que a próxima senha use o novo separador.
+            // Para ser consistente com outros inputs, vamos chamar:
+            updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
+        });
     });
 
-    // 5. Listeners de Ação
+    // Listener especial para o customWordlist (textarea)
+    customWordlist.addEventListener('input', () => {
+        savePassphraseSettings(passphraseInputs);
+        // Recalcula a força imediatamente, pois a mudança na lista altera a entropia
+        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
+    });
+
+    // 4.3. Listeners de Ação
     generateButton.addEventListener('click', () => generatePassword(elements));
 
     copyButton.addEventListener('click', () => {
@@ -842,8 +893,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     languageSelect.addEventListener('change', (e) => switchLanguage(e.target.value, elements));
 
-    // 6. Chamada Final de Inicialização
-    // Garante que a primeira senha seja gerada e a força calculada corretamente
-    // após todos os carregamentos e configurações iniciais.
-    generatePassword(elements);
-});
+    // 5. Chamada de Força Inicial
+    // Garante que a força inicial seja calculada com o valor carregado/padrão,
+    // caso o switchMode inicial não tenha gerado uma senha (ex: se o valor for t.displayDefault).
+    updateStrengthIndicator(elements.passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
+
+}); // Fechamento do document.addEventListener('DOMContentLoaded')
