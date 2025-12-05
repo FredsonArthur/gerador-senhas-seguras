@@ -62,31 +62,86 @@ function capitalizeFirstLetter(word) {
 }
 
 /**
+ * Obtém a lista de palavras a ser usada (personalizada se houver, ou a padrão).
+ * Atualiza o aviso de segurança da lista personalizada.
+ * @param {HTMLTextAreaElement} customWordlist - Elemento textarea da lista personalizada.
+ * @param {HTMLElement} customDictWarning - Elemento para exibir o aviso.
+ * @returns {Array<string>} A lista de palavras efetiva.
+ */
+function getEffectiveWordList(customWordlist, customDictWarning) {
+    let customList = [];
+    
+    // 1. Processa a lista personalizada
+    if (customWordlist && customWordlist.value.trim().length > 0) {
+        customList = customWordlist.value
+            .toLowerCase()
+            .split(/[\s,]+/) // Divide por espaço ou vírgula (incluindo nova linha)
+            .filter(word => word.length > 0);
+    }
+    
+    // 2. Determina a lista efetiva
+    const listToUse = customList.length > 0 ? customList : activeWordList;
+
+    // 3. Atualiza o aviso para o usuário (só se a lista personalizada estiver ativa)
+    if (customDictWarning) {
+        if (customList.length > 0 && customList.length < 256) {
+            customDictWarning.textContent = t.customDictWarning;
+            customDictWarning.style.display = 'block';
+        } else {
+            customDictWarning.textContent = '';
+            customDictWarning.style.display = 'none';
+        }
+    }
+
+    return listToUse;
+}
+
+
+/**
  * Calcula a entropia da senha (em bits) baseada no modo.
  * @param {HTMLInputElement} capitalizeWords - Referência ao checkbox.
  * @param {HTMLInputElement} includePassphraseDigits - Referência ao checkbox.
  */
-function calculateStrength(password, mode, charSetSize, passphraseArray = null, capitalizeWords, includePassphraseDigits) {
+function calculateStrength(password, mode, charSetSize, passphraseArray = null, capitalizeWords, includePassphraseDigits, effectiveWordList = null) {
     if (password.length === 0) return 0;
     let entropy = 0;
+    
     if (mode === 'char') {
         entropy = password.length * Math.log2(charSetSize);
-    } else if (mode === 'passphrase' && activeWordList) {
-        const numWords = passphraseArray.filter(item => activeWordList.includes(item.toLowerCase())).length;
-        entropy = numWords * Math.log2(activeWordList.length); 
+    } else if (mode === 'passphrase' && effectiveWordList) {
+        const listSize = effectiveWordList.length;
+        
+        // Entropia baseada no tamanho da lista efetiva
+        const numWordsInArray = passphraseArray ? passphraseArray.filter(item => effectiveWordList.includes(item.toLowerCase())).length : password.split(/[^a-zA-ZáàãâéèêíìîóòõôúùûçÁÀÃÂÉÈÊÍÌÎÓÒÕÔÚÙÛÇ]+/).filter(w => effectiveWordList.includes(w.toLowerCase())).length;
+        
+        entropy = numWordsInArray * Math.log2(listSize); 
         
         if (capitalizeWords.checked) {
-            entropy += numWords * 1; 
+            entropy += numWordsInArray * 1; 
         }
         
         const doIncludeDigits = includePassphraseDigits.checked;
         if (doIncludeDigits && passphraseArray) {
-            const numElements = passphraseArray.length; 
-            const digitEntropy = Math.log2(10); 
-            const positionEntropy = Math.log2(numElements); 
-            // 💡 NOTA: O fator '2' é um peso arbitrário para aumentar a pontuação de entropia. 
-            // Para simplificar e maior rigor, o ' * 2' poderia ser removido.
-            entropy += (digitEntropy + positionEntropy) * 2; 
+            // Conta quantos elementos no array são dígitos puros
+            const numDigitsIncluded = passphraseArray.filter(item => /^\d+$/.test(item)).length;
+
+            if (numDigitsIncluded > 0) {
+                 // Cálculo de entropia de dígitos
+                 const totalDigitEntropy = passphraseArray.reduce((acc, item) => {
+                     const match = item.match(/^(\d+)$/);
+                     if (match) {
+                         const n = match[1].length;
+                         return acc + (n * Math.log2(10));
+                     }
+                     return acc;
+                 }, 0);
+                 
+                 // Adiciona a entropia da posição dos dígitos
+                 const numElements = passphraseArray.length;
+                 const positionEntropy = Math.log2(numElements); 
+                 
+                 entropy += totalDigitEntropy + (numDigitsIncluded * positionEntropy);
+            }
         }
     }
     return entropy > 0 ? entropy : 0;
@@ -139,6 +194,13 @@ function formatBreakTime(entropy) {
 function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = null, strengthBar, strengthText, charInputs = {}, passphraseInputs = {}) {
     const capitalizeWords = passphraseInputs.capitalizeWords;
     const includePassphraseDigits = passphraseInputs.includePassphraseDigits;
+    
+    // Obtém a lista efetiva para o cálculo de entropia da Passphrase
+    let effectiveWordList = null;
+    if (mode === 'passphrase') {
+        effectiveWordList = getEffectiveWordList(passphraseInputs.customWordlist, passphraseInputs.customDictWarning);
+        charSetSize = effectiveWordList ? effectiveWordList.length : 0;
+    }
 
     const entropy = calculateStrength(
         password, 
@@ -146,7 +208,8 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
         charSetSize, 
         passphraseArray, 
         capitalizeWords, 
-        includePassphraseDigits
+        includePassphraseDigits,
+        effectiveWordList 
     );
     let strength = "";
     let width = 0;
@@ -158,7 +221,7 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
         strengthText.textContent = t.tooShort; 
         strengthBar.className = `strength-bar`;
         
-        // 🔑 ARIA: Valores de acessibilidade
+        // ARIA: Valores de acessibilidade
         strengthBar.setAttribute('aria-valuenow', 0);
         strengthBar.setAttribute('aria-valuetext', t.tooShort);
         return;
@@ -198,7 +261,7 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
         `${t.strengthLabel} <strong>${strength}</strong> (${entropy.toFixed(1)} bits)<br>` +
         `${t.breakTimeLabel} <strong>${breakTime}</strong>`;
 
-    // 🔑 ARIA: Configuração de acessibilidade para a barra
+    // ARIA: Configuração de acessibilidade para a barra
     strengthBar.setAttribute('role', 'progressbar');
     strengthBar.setAttribute('aria-valuenow', entropy.toFixed(1));
     strengthBar.setAttribute('aria-valuemin', 0);
@@ -277,31 +340,35 @@ function generateCharacterPassword(inputs, strengthInputs) {
  * @param {Object} inputs - Objeto contendo todas as referências de input de Passphrase.
  */
 function generatePassphrase(inputs, strengthInputs) {
-    const { passwordDisplay, numWordsNumberInput, separatorInput, capitalizeWords, includePassphraseDigits } = inputs;
+    const { passwordDisplay, numWordsNumberInput, separatorInput, capitalizeWords, includePassphraseDigits, customWordlist, customDictWarning } = inputs;
 
     const numWords = parseInt(numWordsNumberInput.value); 
     const separator = separatorInput.value || '-';
     const doCapitalize = capitalizeWords.checked;
     const doIncludeDigits = includePassphraseDigits.checked;
+    
+    // Obtém a lista de palavras que será utilizada (customizada ou Diceware)
+    const effectiveWordList = getEffectiveWordList(customWordlist, customDictWarning);
 
     let passphraseArray = [];
 
-    if (!activeWordList || numWords < 3 || numWords > 10) { 
+    // 1. VALIDAÇÃO
+    if (!effectiveWordList || numWords < 3 || numWords > 10 || effectiveWordList.length === 0) { 
         passwordDisplay.value = t.errorInvalidWords; 
         updateStrengthIndicator("", 'passphrase', 0, null, strengthInputs.strengthBar, strengthInputs.strengthText);
         return;
     }
-
-    // 1. Gera as palavras usando a lista ativa
+    
+    // 2. Gera as palavras usando a lista efetiva
     for (let i = 0; i < numWords; i++) {
-        let word = activeWordList[getRandomSecureIndex(activeWordList.length)];
+        let word = effectiveWordList[getRandomSecureIndex(effectiveWordList.length)];
         if (doCapitalize) {
             word = capitalizeFirstLetter(word);
         }
         passphraseArray.push(word);
     }
     
-    // 2. Inclui o dígito
+    // 3. Inclui o dígito
     if (doIncludeDigits) {
         const numDigits = getRandomSecureIndex(3) + 1; 
         const maxNumber = 10**numDigits - 1; 
@@ -311,11 +378,12 @@ function generatePassphrase(inputs, strengthInputs) {
         passphraseArray.splice(insertIndex, 0, digitString);
     }
 
-    // 3. Junta
+    // 4. Junta
     const finalPassphrase = passphraseArray.join(separator);
     
     passwordDisplay.value = finalPassphrase;
-    updateStrengthIndicator(finalPassphrase, 'passphrase', activeWordList.length, passphraseArray, strengthInputs.strengthBar, strengthInputs.strengthText, strengthInputs.charInputs, inputs);
+    // 5. Atualiza a força usando a lista EFETIVA
+    updateStrengthIndicator(finalPassphrase, 'passphrase', effectiveWordList.length, passphraseArray, strengthInputs.strengthBar, strengthInputs.strengthText, strengthInputs.charInputs, inputs);
     saveToHistory(finalPassphrase);
 }
 
@@ -329,7 +397,7 @@ function generatePassword(elements) {
     copyButton.textContent = t.copy; 
     copyButton.classList.remove('copied');
     
-    if (passwordDisplay.value === t.displayDefault) {
+    if (passwordDisplay.value === "" || passwordDisplay.value.includes("Clique em GERAR") || passwordDisplay.value.includes("Select")) {
         passwordDisplay.value = "";
     }
 
@@ -365,7 +433,7 @@ function syncNumWordsInputs(source, numWordsRangeInput, numWordsNumberInput) {
     if (source === numWordsRangeInput) {
         numWordsNumberInput.value = safeValue;
     } else {
-        numWordsNumberInput.value = safeValue;
+        numWordsRangeInput.value = safeValue;
     }
 }
 
@@ -385,6 +453,9 @@ function switchMode(elements) {
     
     currentMode = isPassphraseMode ? 'passphrase' : 'char';
     
+    // 🔑 NOVO: Salva o modo atual
+    localStorage.setItem('generatorMode', currentMode);
+
     generatePassword(elements);
 }
 
@@ -503,7 +574,7 @@ function loadTheme() {
 }
 
 
-// --- 9. LÓGICA DE INTERNACIONALIZAÇÃO (i18n) ---
+// --- 9. LÓGICA DE INTERNACIONALIZAÇÃO (i18n) e PERSISTÊNCIA ---
 
 /**
  * Aplica as traduções baseadas no idioma ativo.
@@ -527,6 +598,10 @@ function applyTranslations(lang, elements) {
             if (key === 'displayDefault') {
                 el.setAttribute('placeholder', text);
             }
+        } else if (el.tagName === 'TEXTAREA') {
+            if (key === 'customDictPlaceholder') {
+                el.setAttribute('placeholder', text);
+            }
         } else {
             el.textContent = text;
         }
@@ -542,8 +617,6 @@ function applyTranslations(lang, elements) {
     // Garante que o texto do botão de Gerar e Força seja atualizado
     switchMode(elements); 
     
-    // updateStrengthIndicator é chamado dentro de switchMode(elements)
-    
     renderHistory();
 }
 
@@ -556,10 +629,78 @@ function switchLanguage(newLang, elements) {
     applyTranslations(newLang, elements);
 }
 
+// 🔑 NOVO: FUNÇÃO PARA CARREGAR CONFIGURAÇÕES
+function loadSettings(elements) {
+    // Busca as configurações do localStorage. Usa um objeto vazio como fallback.
+    const charSettings = JSON.parse(localStorage.getItem('charSettings') || '{}');
+    const passphraseSettings = JSON.parse(localStorage.getItem('passphraseSettings') || '{}');
+    const mode = localStorage.getItem('generatorMode') || 'char';
+
+    // 1. Carrega Modo
+    if (mode === 'passphrase') {
+        elements.modePassphrase.checked = true;
+    } else {
+        elements.modeChar.checked = true;
+    }
+
+    // 2. Carrega Configurações de Caracteres
+    // Usa valores padrão (12 e true) se não houver no storage.
+    elements.lengthNumberInput.value = charSettings.length || 12;
+    elements.lengthRangeInput.value = charSettings.length || 12;
+
+    // Nota: Checkboxes devem ter um fallback explícito para true ou false.
+    // O operador || pode não funcionar bem para booleanos armazenados como false.
+    elements.charInputs.includeUppercase.checked = charSettings.includeUppercase !== false;
+    elements.charInputs.includeLowercase.checked = charSettings.includeLowercase !== false;
+    elements.charInputs.includeNumbers.checked = charSettings.includeNumbers !== false;
+    elements.charInputs.includeSymbols.checked = charSettings.includeSymbols || false;
+    elements.charInputs.includeAccentedChars.checked = charSettings.includeAccentedChars || false;
+    elements.charInputs.excludeAmbiguous.checked = charSettings.excludeAmbiguous || false;
+    
+    // 3. Carrega Configurações de Passphrase
+    // Usa valores padrão (4 e '-') se não houver no storage.
+    elements.numWordsNumberInput.value = passphraseSettings.numWords || 4;
+    elements.numWordsRangeInput.value = passphraseSettings.numWords || 4;
+    
+    elements.passphraseInputs.separatorInput.value = passphraseSettings.separator || '-';
+    elements.passphraseInputs.capitalizeWords.checked = passphraseSettings.capitalizeWords || false;
+    elements.passphraseInputs.includePassphraseDigits.checked = passphraseSettings.includePassphraseDigits !== false;
+
+    // Carrega Dicionário Personalizado
+    elements.passphraseInputs.customWordlist.value = passphraseSettings.customWordlist || '';
+}
+
+// 🔑 NOVO: FUNÇÃO PARA SALVAR CONFIGURAÇÕES DE CARACTERE
+function saveCharSettings(inputs) {
+    const settings = {
+        length: parseInt(inputs.lengthNumberInput.value),
+        includeUppercase: inputs.includeUppercase.checked,
+        includeLowercase: inputs.includeLowercase.checked, // Corrigido de 'lowercase' para 'includeLowercase'
+        includeNumbers: inputs.includeNumbers.checked,
+        includeSymbols: inputs.includeSymbols.checked,
+        includeAccentedChars: inputs.includeAccentedChars.checked,
+        excludeAmbiguous: inputs.excludeAmbiguous.checked,
+    };
+    localStorage.setItem('charSettings', JSON.stringify(settings));
+}
+
+// 🔑 NOVO: FUNÇÃO PARA SALVAR CONFIGURAÇÕES DE PASSPHRASE
+function savePassphraseSettings(inputs) {
+    const settings = {
+        numWords: parseInt(inputs.numWordsNumberInput.value),
+        separator: inputs.separatorInput.value,
+        capitalizeWords: inputs.capitalizeWords.checked,
+        includePassphraseDigits: inputs.includePassphraseDigits.checked,
+        customWordlist: inputs.customWordlist.value // Salva o conteúdo do textarea
+    };
+    localStorage.setItem('passphraseSettings', JSON.stringify(settings));
+}
+
+
 // --- 10. INICIALIZAÇÃO E OUVINTES DE EVENTOS (Listeners) ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. 🎯 REUNIÃO DE TODAS AS REFERÊNCIAS DO DOM (Para simplificar e otimizar)
+    // 1. 🎯 REUNIÃO DE TODAS AS REFERÊNCIAS DO DOM
     
     // Elementos de Entrada/Saída
     const passwordDisplay = document.getElementById('password-display');
@@ -590,6 +731,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const separatorInput = document.getElementById('separator');
     const capitalizeWords = document.getElementById('capitalize-words');
     const includePassphraseDigits = document.getElementById('include-passphrase-digits');
+    
+    // Dicionário Personalizado
+    const customWordlist = document.getElementById('custom-wordlist');
+    const customDictWarning = document.getElementById('custom-dict-warning');
 
     // Indicador de Força
     const strengthBar = document.getElementById('strength-bar');
@@ -604,10 +749,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Seletor de Idioma
     const languageSelect = document.getElementById('language-select');
 
-    // 2. 💡 Organiza as referências em objetos (passadas para as funções)
-    const charInputs = { passwordDisplay, lengthNumberInput, excludeAmbiguous, includeUppercase, includeLowercase, includeNumbers, includeSymbols, includeAccentedChars };
-    const passphraseInputs = { passwordDisplay, numWordsNumberInput, separatorInput, capitalizeWords, includePassphraseDigits };
-    const strengthInputs = { strengthBar, strengthText, charInputs, passphraseInputs }; // Passa os inputs para o cálculo de força
+    // 2. 💡 Organiza as referências em objetos
+    // Inclui lengthRangeInput e numWordsRangeInput para as funções de salvar.
+    const charInputs = { 
+        passwordDisplay, lengthNumberInput, lengthRangeInput,
+        excludeAmbiguous, includeUppercase, includeLowercase, 
+        includeNumbers, includeSymbols, includeAccentedChars 
+    };
+    
+    const passphraseInputs = { 
+        passwordDisplay, numWordsNumberInput, numWordsRangeInput,
+        separatorInput, capitalizeWords, includePassphraseDigits, 
+        customWordlist, customDictWarning
+    };
+    
+    const strengthInputs = { strengthBar, strengthText, charInputs, passphraseInputs }; 
     
     const elements = { 
         passwordDisplay, generateButton, copyButton, modeChar, modePassphrase, 
@@ -618,10 +774,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Inicialização
     loadTheme();
+    
+    // 🔑 NOVO: Carrega as configurações ANTES de aplicar as traduções e o modo
+    loadSettings(elements); 
+    
     languageSelect.value = currentLang; 
     applyTranslations(currentLang, elements);
     
-    // 4. OUVINTES DE EVENTOS (Usam as referências de closure)
+    // 4. OUVINTES DE EVENTOS (Listeners)
     
     // Modo (Caracteres/Passphrase)
     modeChar.addEventListener('change', () => switchMode(elements));
@@ -630,32 +790,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // Comprimento/Número de Palavras
     lengthRangeInput.addEventListener('input', () => { 
         syncLengthInputs(lengthRangeInput, lengthRangeInput, lengthNumberInput); 
+        saveCharSettings(charInputs); // 🔑 NOVO: Salva após a mudança
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     lengthNumberInput.addEventListener('input', () => { 
         syncLengthInputs(lengthNumberInput, lengthRangeInput, lengthNumberInput); 
+        saveCharSettings(charInputs); // 🔑 NOVO: Salva após a mudança
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     numWordsRangeInput.addEventListener('input', () => { 
         syncNumWordsInputs(numWordsRangeInput, numWordsRangeInput, numWordsNumberInput); 
+        savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva após a mudança
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     numWordsNumberInput.addEventListener('input', () => { 
         syncNumWordsInputs(numWordsNumberInput, numWordsRangeInput, numWordsNumberInput); 
+        savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva após a mudança
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
 
 
     // Ações ao Gerar e Copiar (incluindo mudanças nas opções de geração)
-    const generationInputs = [
+    const charInputsToWatch = [
         includeUppercase, includeLowercase, includeNumbers, includeSymbols, 
-        includeAccentedChars, excludeAmbiguous, separatorInput, capitalizeWords, includePassphraseDigits
+        includeAccentedChars, excludeAmbiguous
     ];
     
-    generationInputs.forEach(input => {
-        input.addEventListener('change', () => generatePassword(elements)); 
+    charInputsToWatch.forEach(input => {
+        input.addEventListener('change', () => {
+            saveCharSettings(charInputs); // 🔑 NOVO: Salva
+            generatePassword(elements);
+        });
+    });
+
+    const passphraseInputsToWatch = [
+        separatorInput, capitalizeWords, includePassphraseDigits, customWordlist
+    ];
+
+    passphraseInputsToWatch.forEach(input => {
+        // 'change' para checkbox, 'input' para campos de texto/área de texto
+        input.addEventListener('change', () => { 
+            savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva
+            generatePassword(elements);
+        });
         input.addEventListener('input', () => { 
-            updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
+            savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva
+            // Recalcula a força apenas se estiver no modo Passphrase e a entrada afetar a força (separador, lista customizada)
+            if (currentMode === 'passphrase') {
+                const effectiveList = getEffectiveWordList(customWordlist, customDictWarning);
+                updateStrengthIndicator(passwordDisplay.value, currentMode, effectiveList.length, null, strengthBar, strengthText, charInputs, passphraseInputs); 
+            } else {
+                updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
+            }
         });
     });
 

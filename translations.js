@@ -25,7 +25,7 @@ var translations = {
         strong: "Forte",
         veryStrong: "Muito Forte",
         
-        // 🔑 NOVAS CHAVES DE TEMPO E AVALIAÇÃO DE SEGURANÇA (Para Força Aprimorada) 🔑
+        // 🔑 CHAVES DE TEMPO E AVALIAÇÃO DE SEGURANÇA (Para Força Aprimorada) 🔑
         breakTimeLabel: "Tempo de Quebra Estimado:",
         time_seconds: "segundos",
         time_minutes: "minutos",
@@ -55,7 +55,13 @@ var translations = {
         separator: "Separador:",
         capitalizeWords: "Capitalizar a primeira letra de cada palavra",
         includePassphraseDigits: "Incluir dígito(s) aleatório(s)",
-
+        
+        // 🔑 NOVAS CHAVES DE DICIONÁRIO PERSONALIZADO 🔑
+        customDictTitle: "📝 Dicionário Personalizado",
+        customDictPlaceholder: "Cole sua lista de palavras aqui (separadas por nova linha). A lista deve ter no mínimo 256 palavras para segurança mínima.",
+        customDictNote: "Se este campo estiver preenchido, ele **substituirá** o dicionário Diceware padrão.",
+        customDictWarning: "Lista muito curta. Mínimo de 256 palavras recomendado.",
+        
         // Histórico
         historyTitle: "📜 Histórico da Sessão",
         historyClear: "Histórico de senhas limpo.",
@@ -84,7 +90,7 @@ var translations = {
         strong: "Strong",
         veryStrong: "Very Strong",
         
-        // 🔑 NOVAS CHAVES DE TEMPO E AVALIAÇÃO DE SEGURANÇA (Para Força Aprimorada) 🔑
+        // 🔑 NEW TIME AND SECURITY ASSESSMENT KEYS (For Enhanced Strength) 🔑
         breakTimeLabel: "Estimated Break Time:",
         time_seconds: "seconds",
         time_minutes: "minutes",
@@ -94,7 +100,7 @@ var translations = {
         time_years: "years",
         time_millions_years: "Million Years",
         
-        // CHAVES DE ERRO E TOAST (Crucial para o script.js)
+        // ERROR AND TOAST KEYS (Crucial for script.js)
         errorSelectChar: "Select at least one character type.",
         errorInvalidWords: "The number of words is invalid (3-10).",
 
@@ -115,6 +121,12 @@ var translations = {
         capitalizeWords: "Capitalize first letter of each word",
         includePassphraseDigits: "Include random digit(s)",
 
+        // 🔑 NEW CUSTOM DICTIONARY KEYS 🔑
+        customDictTitle: "📝 Custom Dictionary",
+        customDictPlaceholder: "Paste your word list here (separated by new line). The list should have at least 256 words for minimum security.",
+        customDictNote: "If this field is filled, it will **override** the default Diceware dictionary.",
+        customDictWarning: "List too short. Minimum 256 words recommended.",
+        
         // History
         historyTitle: "📜 Session History",
         historyClear: "Password history cleared.",
