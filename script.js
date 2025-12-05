@@ -1,6 +1,12 @@
 /* --- script.js - CÓDIGO FINAL, LIMPO E OTIMIZADO (Lógica Pura) --- */
 
+// NOTA: Para rodar este script, você precisaria de um arquivo 'translations.js' 
+// que defina 'translations' e 'wordLists', além do HTML e CSS.
+
 // --- 1. CONFIGURAÇÕES E VARIÁVEIS GLOBAIS (NÃO dependem do DOM) ---
+
+// 🚨 NOVO: CONSTANTE PARA A VALIDAÇÃO DE ENTROPIA
+const MIN_WORDS_REQUIRED = 256; // Mínimo de palavras para garantir 8 bits de entropia.
 
 // NOTA: 'translations' e 'wordLists' são carregados globalmente a partir de 'translations.js'
 
@@ -84,7 +90,8 @@ function getEffectiveWordList(customWordlist, customDictWarning) {
 
     // 3. Atualiza o aviso para o usuário (só se a lista personalizada estiver ativa)
     if (customDictWarning) {
-        if (customList.length > 0 && customList.length < 256) {
+        // 🚨 VALIDAÇÃO DE ENTROPIA IMPLEMENTADA AQUI
+        if (customList.length > 0 && customList.length < MIN_WORDS_REQUIRED) {
             customDictWarning.textContent = t.customDictWarning;
             customDictWarning.style.display = 'block';
         } else {
@@ -198,7 +205,11 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
     // Obtém a lista efetiva para o cálculo de entropia da Passphrase
     let effectiveWordList = null;
     if (mode === 'passphrase') {
-        effectiveWordList = getEffectiveWordList(passphraseInputs.customWordlist, passphraseInputs.customDictWarning);
+        // Obtém o elemento customDictWarning do objeto passphraseInputs
+        const customDictWarningElement = passphraseInputs.customDictWarning;
+        
+        // Passa o elemento customDictWarning para a função getEffectiveWordList para que ela atualize o aviso
+        effectiveWordList = getEffectiveWordList(passphraseInputs.customWordlist, customDictWarningElement);
         charSetSize = effectiveWordList ? effectiveWordList.length : 0;
     }
 
@@ -216,7 +227,7 @@ function updateStrengthIndicator(password, mode, charSetSize, passphraseArray = 
     let className = "";
 
     // 1. Lógica de cálculo e classificação
-    if (entropy === 0 || password === t.displayDefault) {
+    if (entropy === 0 || password === t.displayDefault || password.includes(t.errorSelectChar) || password.includes(t.errorInvalidWords)) {
         strengthBar.style.width = "0%";
         strengthText.textContent = t.tooShort; 
         strengthBar.className = `strength-bar`;
@@ -282,7 +293,7 @@ function removeAmbiguous(charSet) {
  */
 function generateCharacterPassword(inputs, strengthInputs) {
     const { passwordDisplay, lengthNumberInput, excludeAmbiguous, 
-            includeUppercase, includeLowercase, includeNumbers, includeSymbols, includeAccentedChars } = inputs;
+             includeUppercase, includeLowercase, includeNumbers, includeSymbols, includeAccentedChars } = inputs;
     
     const length = parseInt(lengthNumberInput.value);
     const isAmbiguousExcluded = excludeAmbiguous.checked;
@@ -433,7 +444,7 @@ function syncNumWordsInputs(source, numWordsRangeInput, numWordsNumberInput) {
     if (source === numWordsRangeInput) {
         numWordsNumberInput.value = safeValue;
     } else {
-        numWordsRangeInput.value = safeValue;
+        numWordsNumberInput.value = safeValue;
     }
 }
 
@@ -456,6 +467,7 @@ function switchMode(elements) {
     // 🔑 NOVO: Salva o modo atual
     localStorage.setItem('generatorMode', currentMode);
 
+    // Chama a geração para que o indicador de força atualize corretamente
     generatePassword(elements);
 }
 
@@ -463,7 +475,7 @@ function switchMode(elements) {
 // --- 7. HISTÓRICO, COPIAR E TOAST (Acessa o DOM via closure ou getElementById pontual) ---
 
 function saveToHistory(password) {
-    if (!password || password.includes('Clique em GERAR') || password.includes('Selecione')) return; 
+    if (!password || password.includes(t.displayDefault) || password.includes(t.errorSelectChar) || password.includes(t.errorInvalidWords)) return; 
     let history = JSON.parse(sessionStorage.getItem('passwordHistory') || '[]');
     if (history.length === 0 || history[history.length - 1] !== password) {
         history.push(password);
@@ -610,11 +622,12 @@ function applyTranslations(lang, elements) {
     document.title = t.title;
     
     // Atualiza o display padrão
-    if (elements.passwordDisplay.value === "" || elements.passwordDisplay.value.includes("Clique em GERAR")) {
+    if (elements.passwordDisplay.value === "" || elements.passwordDisplay.value.includes("Clique em GERAR") || elements.passwordDisplay.value.includes("Select")) {
         elements.passwordDisplay.value = t.displayDefault;
     }
 
     // Garante que o texto do botão de Gerar e Força seja atualizado
+    // switchMode é chamado aqui, o que por sua vez chama generatePassword, atualizando a força.
     switchMode(elements); 
     
     renderHistory();
@@ -675,7 +688,7 @@ function saveCharSettings(inputs) {
     const settings = {
         length: parseInt(inputs.lengthNumberInput.value),
         includeUppercase: inputs.includeUppercase.checked,
-        includeLowercase: inputs.includeLowercase.checked, // Corrigido de 'lowercase' para 'includeLowercase'
+        includeLowercase: inputs.includeLowercase.checked, 
         includeNumbers: inputs.includeNumbers.checked,
         includeSymbols: inputs.includeSymbols.checked,
         includeAccentedChars: inputs.includeAccentedChars.checked,
@@ -733,8 +746,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const includePassphraseDigits = document.getElementById('include-passphrase-digits');
     
     // Dicionário Personalizado
+    // 💡 customDictWarning deve ser o ID do elemento de alerta, que foi alterado no index.html.
     const customWordlist = document.getElementById('custom-wordlist');
-    const customDictWarning = document.getElementById('custom-dict-warning');
+    const customDictWarning = document.getElementById('custom-dict-alert'); 
 
     // Indicador de Força
     const strengthBar = document.getElementById('strength-bar');
@@ -791,82 +805,70 @@ document.addEventListener('DOMContentLoaded', () => {
     lengthRangeInput.addEventListener('input', () => { 
         syncLengthInputs(lengthRangeInput, lengthRangeInput, lengthNumberInput); 
         saveCharSettings(charInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     lengthNumberInput.addEventListener('input', () => { 
         syncLengthInputs(lengthNumberInput, lengthRangeInput, lengthNumberInput); 
         saveCharSettings(charInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     numWordsRangeInput.addEventListener('input', () => { 
         syncNumWordsInputs(numWordsRangeInput, numWordsRangeInput, numWordsNumberInput); 
         savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
     numWordsNumberInput.addEventListener('input', () => { 
         syncNumWordsInputs(numWordsNumberInput, numWordsRangeInput, numWordsNumberInput); 
         savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva após a mudança
+        // Recalcula a força sem gerar nova senha
         updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
     });
-
-
-    // Ações ao Gerar e Copiar (incluindo mudanças nas opções de geração)
-    const charInputsToWatch = [
-        includeUppercase, includeLowercase, includeNumbers, includeSymbols, 
-        includeAccentedChars, excludeAmbiguous
-    ];
     
-    charInputsToWatch.forEach(input => {
+    // 4.1. Listeners de Caracteres (Salvar e Recalcular Força)
+    [includeUppercase, includeLowercase, includeNumbers, includeSymbols, includeAccentedChars, excludeAmbiguous].forEach(input => {
         input.addEventListener('change', () => {
-            saveCharSettings(charInputs); // 🔑 NOVO: Salva
-            generatePassword(elements);
+            saveCharSettings(charInputs);
+            updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
         });
     });
 
-    const passphraseInputsToWatch = [
-        separatorInput, capitalizeWords, includePassphraseDigits, customWordlist
-    ];
-
-    passphraseInputsToWatch.forEach(input => {
-        // 'change' para checkbox, 'input' para campos de texto/área de texto
-        input.addEventListener('change', () => { 
-            savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva
-            generatePassword(elements);
-        });
-        input.addEventListener('input', () => { 
-            savePassphraseSettings(passphraseInputs); // 🔑 NOVO: Salva
-            // Recalcula a força apenas se estiver no modo Passphrase e a entrada afetar a força (separador, lista customizada)
-            if (currentMode === 'passphrase') {
-                const effectiveList = getEffectiveWordList(customWordlist, customDictWarning);
-                updateStrengthIndicator(passwordDisplay.value, currentMode, effectiveList.length, null, strengthBar, strengthText, charInputs, passphraseInputs); 
-            } else {
-                updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
-            }
+    // 4.2. Listeners de Passphrase (Salvar e Recalcular Força)
+    [separatorInput, capitalizeWords, includePassphraseDigits].forEach(input => {
+        input.addEventListener('change', () => {
+            savePassphraseSettings(passphraseInputs);
+            updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
         });
     });
 
+    // Listener especial para o customWordlist (textarea)
+    customWordlist.addEventListener('input', () => {
+        savePassphraseSettings(passphraseInputs);
+        // Recalcula a força imediatamente, pois a mudança na lista altera a entropia
+        updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
+    });
+
+    // 4.3. Listeners de Ação
     generateButton.addEventListener('click', () => generatePassword(elements));
-    
-    // Copiar
+
     copyButton.addEventListener('click', () => {
-        const password = passwordDisplay.value;
-        if (password && password !== t.displayDefault && !password.includes('**')) {
-            copyToClipboard(password, copyButton);
-        } else {
-            showToast(t.displayDefault); 
+        // Evita copiar a mensagem de placeholder ou erro
+        if (passwordDisplay.value && passwordDisplay.value !== t.displayDefault && !passwordDisplay.value.includes(t.errorSelectChar) && !passwordDisplay.value.includes(t.errorInvalidWords)) {
+            copyToClipboard(passwordDisplay.value, copyButton);
         }
     });
 
-    // Tema
     themeToggle.addEventListener('click', toggleTheme);
 
-    // Histórico
     clearHistoryButton.addEventListener('click', clearHistory);
 
-    // Seletor de Idioma
-    languageSelect.addEventListener('change', (e) => {
-        switchLanguage(e.target.value, elements);
-    });
+    languageSelect.addEventListener('change', (e) => switchLanguage(e.target.value, elements));
 
-    // 5. Gera a senha inicial (já coberta pelo applyTranslations/switchMode)
-});
+    // 5. Chamada de Força Inicial
+    // Garante que a força inicial seja calculada com o valor carregado/padrão,
+    // caso o switchMode inicial não tenha gerado uma senha (ex: se o valor for t.displayDefault).
+    updateStrengthIndicator(elements.passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs); 
+
+}); // Fechamento do document.addEventListener('DOMContentLoaded')
