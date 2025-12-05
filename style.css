@@ -1,4 +1,4 @@
-/* --- style.css - VERSÃO FINAL E COMPLETA --- */
+/* --- style.css - VERSÃO FINAL E COMPLETA (Unidades de Fontes em REM) --- */
 
 /* ========================================================================= */
 /* --- 1. DEFINIÇÃO DE VARIÁVEIS E TEMA --- */
@@ -101,7 +101,7 @@ h1 {
     text-align: center;
     color: var(--text-color);
     margin-bottom: 20px;
-    font-size: 1.8em;
+    font-size: 1.8rem;
 }
 
 .settings, .history-container {
@@ -111,12 +111,8 @@ h1 {
     transition: background-color 0.4s;
 }
 
-.settings {
-    margin-bottom: 20px;
-}
-
 .settings h2 {
-    font-size: 1.2em;
+    font-size: 1.2rem;
     margin-top: 0;
     margin-bottom: 15px;
     border-bottom: 1px solid var(--input-border);
@@ -153,7 +149,7 @@ h1 {
     background-color: var(--primary-color);
     color: var(--button-text);
     border-radius: 5px;
-    font-size: 1.2em;
+    font-size: 1.2rem;
     margin-top: 15px;
 }
 #generate-button:hover { background-color: var(--primary-hover); }
@@ -163,7 +159,7 @@ h1 {
     padding: 10px 15px;
     background-color: var(--copy-color);
     color: var(--button-text);
-    font-size: 1em;
+    font-size: 1rem;
 }
 #copy-button:hover, .history-copy-btn:hover { background-color: var(--copy-hover); }
 
@@ -194,7 +190,7 @@ h1 {
     color: var(--text-color);
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 0.9rem;
     appearance: none; 
     transition: background-color 0.3s, border-color 0.3s;
 }
@@ -203,6 +199,52 @@ h1 {
 #length-number::-webkit-inner-spin-button, #length-number::-webkit-outer-spin-button,
 #num-words-number::-webkit-inner-spin-button, #num-words-number::-webkit-outer-spin-button { 
     -webkit-appearance: none; margin: 0; 
+}
+
+
+/* ========================================================================= */
+/* --- MELHORIA DE ACESSIBILIDADE: ESTILOS DE FOCO (:focus) --- */
+/* ========================================================================= */
+
+/* Estilo de Foco Unificado para todos os elementos interativos (Teclado) */
+#generate-button:focus, 
+#copy-button:focus, 
+#language-select:focus,
+#theme-toggle:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+.history-copy-btn:focus,
+#clear-history-button:focus,
+.mode-selector label:focus-within {
+    /* Desativa o outline padrão para substituir por um box-shadow consistente */
+    outline: none !important;
+    
+    /* Aplica um box-shadow contrastante (azul) */
+    /* Camada 1: Cor de foco | Camada 2: Cor de fundo do container */
+    box-shadow: 0 0 0 3px var(--copy-color), 0 0 0 5px var(--container-bg);
+    
+    /* Garante que o foco siga o arredondamento dos elementos */
+    border-radius: 5px; 
+}
+
+/* Tratamento específico para inputs/display, usando a cor de foco para a borda interna */
+#password-display:focus, #length-number:focus, #num-words-number:focus, .setting-item input[type="text"]#separator:focus {
+    border-color: var(--copy-color);
+}
+
+/* Estilo para a Label do Mode Selector (quando o radio button está focado) */
+.mode-selector input[type="radio"]:focus + label {
+    outline: none; 
+    box-shadow: 0 0 0 3px var(--copy-color), 0 0 0 5px var(--settings-bg); /* O 5px usa o fundo do bloco de configurações */
+    border-color: var(--copy-color); 
+}
+
+/* Tratamento de Checkboxes: Adiciona um foco mais simples, já que o input é pequeno */
+.setting-item input[type="checkbox"]:focus {
+    outline: 2px solid var(--copy-color);
+    outline-offset: 2px;
+    box-shadow: none; /* Evita conflito com o box-shadow geral */
 }
 
 
@@ -218,7 +260,7 @@ h1 {
 #password-display {
     flex-grow: 1;
     padding: 12px;
-    font-size: 1.1em;
+    font-size: 1.1rem;
     border-radius: 5px 0 0 5px;
     word-break: break-all; 
     font-family: 'Roboto Mono', monospace; 
@@ -227,7 +269,7 @@ h1 {
 
 #copy-button {
     border-radius: 0 5px 5px 0;
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 
@@ -279,13 +321,14 @@ h1 {
     width: 45px;
     text-align: center;
     padding: 5px 8px;
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 /* Separador */
 .setting-item input[type="text"]#separator {
     width: 40px;
     padding: 5px 8px;
+    font-size: 1rem;
     text-align: center;
 }
 
@@ -353,10 +396,13 @@ h1 {
 /* ========================================================================= */
 
 .strength-indicator-container { margin-bottom: 15px; }
-.strength-label { font-size: 0.9em; color: var(--secondary-text); }
+.strength-label { 
+    font-size: 0.9rem; 
+    color: var(--secondary-text); 
+}
 .strength-text {
     text-align: right;
-    font-size: 0.9em;
+    font-size: 0.9rem;
     font-weight: bold;
     margin-top: 5px;
     color: var(--secondary-text);
@@ -385,17 +431,20 @@ h1 {
 #theme-toggle {
     background: none;
     border: none;
-    font-size: 1.5em;
+    font-size: 1.5rem;
     cursor: pointer;
     padding: 5px;
     border-radius: 50%;
     transition: transform 0.3s, background-color 0.3s;
-    color: var(--secondary-text); 
+    /* MELHORIA IMPLEMENTADA: Cor principal para maior destaque */
+    color: var(--text-color); 
     line-height: 1;
 }
 #theme-toggle:hover {
     transform: rotate(20deg) scale(1.1);
     background-color: var(--settings-bg);
+    /* MELHORIA IMPLEMENTADA: Cor de foco no hover */
+    color: var(--copy-color);
 }
 
 /* Nota: O JS gerencia o conteúdo de 🌙/☀️ */
@@ -444,7 +493,7 @@ h1 {
     margin-top: 0;
     margin-bottom: 0; 
     color: var(--text-color);
-    font-size: 1.2em;
+    font-size: 1.2rem;
 }
 
 #clear-history-button {
@@ -453,7 +502,7 @@ h1 {
     color: var(--copy-color);
     padding: 5px 10px;
     border-radius: 5px;
-    font-size: 0.8em;
+    font-size: 0.8rem;
 }
 
 #clear-history-button:hover {
@@ -490,7 +539,7 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
 .history-password {
     flex-grow: 1;
     font-family: 'Roboto Mono', monospace; 
-    font-size: 0.95em;
+    font-size: 0.95rem;
     overflow-x: auto; 
     white-space: nowrap;
     margin-right: 10px;
@@ -503,7 +552,7 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
 .history-copy-btn {
     padding: 5px 10px;
     border-radius: 3px;
-    font-size: 0.8em;
+    font-size: 1rem; 
     flex-shrink: 0; /* Impede que o botão encolha */
 }
 
@@ -512,7 +561,7 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
     font-style: italic;
     text-align: center;
     margin-top: 5px;
-    font-size: 0.9em;
+    font-size: 0.9rem;
     padding: 10px; 
     border: 1px solid var(--input-border);
     border-radius: 4px;
@@ -520,7 +569,7 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
 }
 
 .history-note {
-    font-size: 0.8em;
+    font-size: 0.8rem;
     color: var(--secondary-text);
     text-align: center;
     margin-top: 15px;
@@ -537,13 +586,18 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
     
     /* Centraliza o cabeçalho (i18n + Tema) e o Título em telas pequenas */
     .header-controls {
-        flex-direction: column;
+        /* 🔑 MELHORIA IMPLEMENTADA: Mantém em linha (row) e centraliza o grupo */
+        flex-direction: row;
+        justify-content: center; /* Centraliza o grupo na linha */
         align-items: center;
-        gap: 10px;
+        gap: 20px; /* Aumentado para melhor espaçamento entre os elementos inline */
         margin-bottom: 25px;
     }
     
-    h1 { margin-bottom: 10px; font-size: 1.6em; } 
+    h1 { 
+        margin-bottom: 10px; 
+        font-size: 1.6rem; 
+    } 
     
     /* Layout Vertical para Área de Saída */
     .output-area { flex-direction: column; }
@@ -573,7 +627,10 @@ body.dark-mode .password-history-list::-webkit-scrollbar-thumb { background-colo
     
     /* Ajuste de tamanho para modo-selector */
     .mode-selector { gap: 5px; }
-    .mode-selector label { font-size: 0.9em; padding: 8px 10px; }
+    .mode-selector label { 
+        font-size: 0.9rem; 
+        padding: 8px 10px; 
+    }
     
     /* Ajuste de Toast para telas pequenas */
     #toast-container {

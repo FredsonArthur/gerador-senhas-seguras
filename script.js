@@ -82,7 +82,10 @@ function getEffectiveWordList(customWordlist, customDictWarning) {
         customList = customWordlist.value
             .toLowerCase()
             .split(/[\s,]+/) // Divide por espaço ou vírgula (incluindo nova linha)
-            .filter(word => word.length > 0);
+            .filter(word => word.length > 0)
+            .map(word => word.trim()) // Adicionado para limpar espaços extras no início/fim
+            // 🚨 REFORÇO DE SANITIZAÇÃO: Remove palavras que ainda contenham espaços internos
+            .filter(word => !word.includes(' ')); 
     }
     
     // 2. Determina a lista efetiva
@@ -354,7 +357,18 @@ function generatePassphrase(inputs, strengthInputs) {
     const { passwordDisplay, numWordsNumberInput, separatorInput, capitalizeWords, includePassphraseDigits, customWordlist, customDictWarning } = inputs;
 
     const numWords = parseInt(numWordsNumberInput.value); 
-    const separator = separatorInput.value || '-';
+    
+    // 🚨 ATUALIZAÇÃO: Sanitização e imposição de separador seguro
+    let separator = separatorInput.value.trim();
+    const defaultSeparator = '-';
+
+    if (separator === '') {
+        separator = defaultSeparator;
+        // Atualiza o campo de input e salva as configurações para dar feedback ao usuário
+        separatorInput.value = separator; 
+        savePassphraseSettings(inputs); 
+    }
+    
     const doCapitalize = capitalizeWords.checked;
     const doIncludeDigits = includePassphraseDigits.checked;
     
@@ -675,7 +689,8 @@ function loadSettings(elements) {
     elements.numWordsNumberInput.value = passphraseSettings.numWords || 4;
     elements.numWordsRangeInput.value = passphraseSettings.numWords || 4;
     
-    elements.passphraseInputs.separatorInput.value = passphraseSettings.separator || '-';
+    // Garante que o separador não seja vazio no carregamento
+    elements.passphraseInputs.separatorInput.value = passphraseSettings.separator && passphraseSettings.separator.trim() !== '' ? passphraseSettings.separator : '-';
     elements.passphraseInputs.capitalizeWords.checked = passphraseSettings.capitalizeWords || false;
     elements.passphraseInputs.includePassphraseDigits.checked = passphraseSettings.includePassphraseDigits !== false;
 
@@ -699,9 +714,16 @@ function saveCharSettings(inputs) {
 
 // 🔑 NOVO: FUNÇÃO PARA SALVAR CONFIGURAÇÕES DE PASSPHRASE
 function savePassphraseSettings(inputs) {
+    // 💡 Sanitiza o separador antes de salvar
+    let separatorValue = inputs.separatorInput.value.trim();
+    if (separatorValue === '') {
+        separatorValue = '-';
+        inputs.separatorInput.value = separatorValue; // Atualiza o input para persistir o visual
+    }
+    
     const settings = {
         numWords: parseInt(inputs.numWordsNumberInput.value),
-        separator: inputs.separatorInput.value,
+        separator: separatorValue,
         capitalizeWords: inputs.capitalizeWords.checked,
         includePassphraseDigits: inputs.includePassphraseDigits.checked,
         customWordlist: inputs.customWordlist.value // Salva o conteúdo do textarea
@@ -839,6 +861,11 @@ document.addEventListener('DOMContentLoaded', () => {
     [separatorInput, capitalizeWords, includePassphraseDigits].forEach(input => {
         input.addEventListener('change', () => {
             savePassphraseSettings(passphraseInputs);
+            // O updateStrengthIndicator será chamado via generatePassword, 
+            // que é chamado por switchMode (se o modo mudar) ou pelo generateButton. 
+            // Aqui, apenas salvamos. A mudança de input no Passphrase mode não recalcula
+            // a força da senha *atual*, apenas garante que a próxima senha use o novo separador.
+            // Para ser consistente com outros inputs, vamos chamar:
             updateStrengthIndicator(passwordDisplay.value, currentMode, 0, null, strengthBar, strengthText, charInputs, passphraseInputs);
         });
     });
